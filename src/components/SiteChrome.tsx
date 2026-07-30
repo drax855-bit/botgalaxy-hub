@@ -79,6 +79,16 @@ export function SiteHeader() {
               </Button>
             </>
           ) : (
+      <Button
+  variant="ghost"
+  size="sm"
+  onClick={async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/", replace: true });
+  }}
+>
+  <LogOut className="h-4 w-4" /> Sign out
+</Button>
             <>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/auth">Sign in</Link>
