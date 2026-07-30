@@ -1,0 +1,125 @@
+
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.bump_vote_count() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.recalc_bot_rating() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+
+WITH seed(name, cat, tags, sd, servers, votes, verified, featured, premium, ago) AS (
+  VALUES
+  ('Sentinel','moderation','{automod,logging,anti-spam}','Enterprise-grade automod with raid detection and full audit logging.',482000,9120,true,true,true,320),
+  ('WardenAI','moderation','{automod,ai,filters}','AI powered content filtering that understands context, not just keywords.',96500,4310,true,true,false,140),
+  ('ModMate','moderation','{warnings,mutes,cases}','Simple, fast case management for warns, mutes and bans.',31200,1580,false,false,false,90),
+  ('PurgeBot','moderation','{cleanup,purge,logs}','Bulk message cleanup with granular filters and safety previews.',18700,860,false,false,false,45),
+  ('Harmony','music','{music,spotify,lossless}','Lossless 24/7 audio with Spotify, YouTube and SoundCloud support.',1240000,22400,true,true,true,600),
+  ('Cadence','music','{music,queue,dj}','Silky playback, collaborative queues and a proper DJ role system.',412000,10250,true,true,false,410),
+  ('LoFiLounge','music','{lofi,radio,chill}','Always-on lofi radio stations for study and chill servers.',88000,3110,true,false,false,210),
+  ('BassDrop','music','{filters,bassboost,eq}','Audio filters, equalizer presets and nightcore in one click.',54000,1990,false,false,false,120),
+  ('Nova AI','ai','{gpt,chat,assistant}','Conversational AI assistant with memory, personas and image generation.',760000,18900,true,true,true,260),
+  ('PixelForge','ai','{images,art,diffusion}','Generate and edit artwork straight inside your channels.',210000,7400,true,true,false,180),
+  ('SummarizeMe','ai','{summary,threads,ai}','Catch up instantly with AI summaries of busy channels.',44000,1720,false,false,false,70),
+  ('TranslateHub','ai','{translation,i18n,ai}','Real-time translation across 90+ languages with flag reactions.',132000,5210,true,false,false,300),
+  ('CoinCraft','economy','{currency,shop,jobs}','Deep server economy with jobs, shops, banks and stock markets.',298000,8600,true,true,false,340),
+  ('MintMarket','economy','{trading,items,inventory}','Player-driven marketplaces and tradeable inventories.',67000,2410,false,false,true,110),
+  ('DailyDrop','economy','{daily,rewards,streaks}','Daily rewards and streaks that keep members coming back.',39000,1450,false,false,false,80),
+  ('GuildForge','gaming','{rpg,dungeons,parties}','A full text RPG with dungeons, loot and guild raids.',186000,6900,true,true,false,230),
+  ('StatTracker','gaming','{valorant,apex,stats}','Live rank and match stats for the biggest competitive titles.',224000,7100,true,false,false,290),
+  ('MinecraftLink','gaming','{minecraft,server,status}','Bridge chat and status between Discord and your Minecraft server.',77000,2980,true,false,false,150),
+  ('Scrimmage','gaming','{tournaments,brackets,scrims}','Run tournaments and scrims with automatic brackets.',29500,1120,false,false,false,60),
+  ('MemeMachine','fun','{memes,images,reddit}','Fresh memes on demand plus meme templates and captions.',505000,11800,true,true,false,380),
+  ('TruthOrDare','fun','{party,games,questions}','Party games, truth or dare and would-you-rather packs.',143000,4300,false,false,false,170),
+  ('PetPals','fun','{pets,collect,virtual}','Adopt, feed and battle virtual pets with your friends.',91000,3400,true,false,true,200),
+  ('DiceRoller','fun','{dice,ttrpg,random}','Dice, coin flips and random pickers for TTRPG nights.',22000,780,false,false,false,50),
+  ('Toolbelt','utility','{reminders,polls,embeds}','Reminders, polls, embeds and calculators in one tidy bot.',356000,9400,true,true,false,350),
+  ('EmbedSmith','utility','{embeds,builder,messages}','Beautiful embed builder with templates and live preview.',61000,2300,false,false,false,100),
+  ('TimeZoneBuddy','utility','{timezones,scheduling,clock}','Timezone conversion and meeting scheduling for global teams.',48000,1660,true,false,false,130),
+  ('ShortLink','utility','{links,shortener,qr}','Shorten links and generate QR codes without leaving Discord.',17000,640,false,false,false,40),
+  ('AscendXP','leveling','{xp,ranks,cards}','Gorgeous rank cards, XP roles and leaderboards.',612000,13400,true,true,true,420),
+  ('LevelUp','leveling','{levels,rewards,roles}','Voice and text XP with configurable curves and role rewards.',158000,5100,true,false,false,240),
+  ('PrestigeBot','leveling','{prestige,seasons,leaderboard}','Seasonal leaderboards with prestige resets.',36000,1280,false,false,false,65),
+  ('TicketFlow','tickets','{tickets,support,transcripts}','Modern ticket panels with transcripts and staff analytics.',287000,8100,true,true,false,310),
+  ('HelpDesk','tickets','{helpdesk,forms,sla}','Form-driven tickets with SLAs and assignment routing.',72000,2600,true,false,true,160),
+  ('QuickTicket','tickets','{buttons,simple,setup}','One-command ticket setup with button panels.',41000,1390,false,false,false,75),
+  ('Bastion','security','{antiraid,verification,captcha}','Anti-raid, captcha verification and alt-account detection.',394000,9800,true,true,true,330),
+  ('GateKeeper','security','{verify,onboarding,rules}','Verification gates and rule acceptance flows.',118000,4050,true,false,false,220),
+  ('PhishGuard','security','{phishing,scam,links}','Blocks scam links using a continuously updated threat feed.',86000,3200,true,false,false,190),
+  ('GiveawayGo','giveaways','{giveaways,drawings,requirements}','Fair giveaways with entry requirements and bonus entries.',332000,8900,true,true,false,300),
+  ('LootBox','giveaways','{drops,events,prizes}','Surprise drops and timed prize events.',54000,1870,false,false,false,95),
+  ('SocialSync','social','{twitter,youtube,feeds}','Post updates from X, YouTube and Instagram automatically.',201000,6600,true,true,false,270),
+  ('ProfileCard','social','{profiles,bio,badges}','Rich member profiles with badges and custom bios.',63000,2200,false,false,false,105),
+  ('ApplyBot','applications','{applications,staff,forms}','Staff applications with review queues and voting.',97000,3600,true,false,false,175),
+  ('FormFlow','applications','{forms,modals,submissions}','Custom modal forms routed to any channel.',35000,1240,false,false,true,68),
+  ('InsightBoard','analytics','{stats,growth,charts}','Server growth charts, retention and channel activity.',124000,4400,true,true,false,205),
+  ('PulseStats','analytics','{activity,heatmap,reports}','Weekly activity reports and member heatmaps.',42000,1510,false,false,false,85),
+  ('AutoPilot','automation','{workflows,triggers,actions}','No-code workflows that react to any server event.',176000,5800,true,true,true,250),
+  ('TriggerKit','automation','{macros,rules,scheduling}','Scheduled messages, macros and conditional rules.',58000,2050,false,false,false,115),
+  ('InviteTrack','invites','{invites,rewards,leaderboard}','Accurate invite tracking with fake-invite detection.',214000,6800,true,false,false,280),
+  ('Referral','invites','{referrals,roles,goals}','Reward members for growing your community.',47000,1620,false,false,false,88),
+  ('CommunityHub','community','{events,rsvp,engagement}','Events, RSVPs and engagement streaks for big communities.',163000,5400,true,true,false,235),
+  ('BirthdayBot','community','{birthdays,celebrations,roles}','Never miss a member birthday again.',109000,3800,true,false,false,195),
+  ('StarBoard','community','{starboard,highlights,pins}','Highlight the best messages automatically.',74000,2700,false,false,false,145),
+  ('Omnia','multipurpose','{allinone,moderation,music}','Moderation, music, levels and economy in a single bot.',1480000,26100,true,true,true,700),
+  ('Everything','multipurpose','{utility,fun,logs}','300+ commands covering everything a server needs.',690000,15200,true,true,false,520),
+  ('Swiss','multipurpose','{tools,modular,dashboard}','Modular bot with a full web dashboard.',245000,7700,true,false,true,265),
+  ('AlertHub','notifications','{alerts,webhooks,rss}','RSS, webhook and uptime alerts delivered where you need them.',88000,3050,true,false,false,185),
+  ('StreamPing','notifications','{twitch,live,ping}','Twitch and Kick go-live notifications with custom embeds.',137000,4700,true,true,false,215),
+  ('StudyBuddy','education','{study,pomodoro,focus}','Pomodoro timers, focus rooms and study leaderboards.',66000,2350,true,false,false,155),
+  ('QuizMaster','education','{quiz,trivia,learning}','Custom quizzes and trivia with scoring.',52000,1840,false,false,false,125),
+  ('LangLab','education','{languages,flashcards,practice}','Flashcards and spaced repetition for language learners.',28000,990,false,false,true,58),
+  ('RoleReactor','roles','{reactionroles,buttons,menus}','Reaction, button and dropdown role menus.',428000,10100,true,true,false,360),
+  ('SelfRole','roles','{selfroles,colors,pronouns}','Color roles, pronoun roles and self-assign panels.',95000,3300,true,false,false,168),
+  ('RoleTimer','roles','{temproles,expiry,automation}','Temporary roles that expire automatically.',31000,1090,false,false,false,62),
+  ('SupportGenie','support','{faq,ai,knowledgebase}','AI helpdesk that answers from your knowledge base.',119000,4150,true,true,true,225),
+  ('FAQBot','support','{faq,commands,tags}','Tag-based FAQ answers your staff can edit instantly.',44000,1570,false,false,false,98),
+  ('OnCall','support','{escalation,paging,staff}','Escalate urgent tickets and page on-call staff.',26000,910,false,false,false,55),
+  ('Echo','utility','{logging,audit,events}','Comprehensive server event logging with filters.',102000,3700,true,false,false,178)
+)
+INSERT INTO public.bots (slug, client_id, name, avatar_url, short_description, long_description, tags, invite_url, website_url, support_url, owner_name, server_count, vote_count, rating, rating_count, verified, featured, premium, is_demo, status, created_at)
+SELECT
+  lower(regexp_replace(s.name,'[^a-zA-Z0-9]+','-','g')),
+  (1000000000000000000 + (row_number() over ())*7777777)::text,
+  s.name, NULL, s.sd,
+  s.name || ' is a ' || s.cat || ' bot trusted by thousands of Discord communities. ' || s.sd ||
+  E'\n\nIt ships with a clean slash-command interface, a configurable permission model and a web dashboard so your moderators can adjust everything without touching a config file. Setup takes under a minute: invite the bot, run /setup, and pick the modules you want.\n\nThis is demo seed content created to showcase the BotGalaxy directory.',
+  s.tags::text[],
+  'https://discord.com/oauth2/authorize?client_id=' || (1000000000000000000 + (row_number() over ())*7777777)::text || '&scope=bot',
+  'https://' || lower(regexp_replace(s.name,'[^a-zA-Z0-9]+','','g')) || '.example.com',
+  'https://discord.gg/botgalaxy',
+  (ARRAY['nebula','pixelwright','orbitlabs','shard','kaito','vervedev','lumen','byteforge'])[1 + (row_number() over ())::int % 8] || '.dev',
+  s.servers, s.votes,
+  ROUND((3.7 + ((s.votes % 130)::numeric / 100))::numeric, 2),
+  GREATEST(8, (s.votes / 37)::int),
+  s.verified, s.featured, s.premium, true, 'approved',
+  now() - (s.ago || ' days')::interval
+FROM seed s;
+
+INSERT INTO public.bot_categories (bot_id, category_id)
+SELECT b.id, c.id FROM public.bots b
+JOIN (VALUES
+  ('Sentinel','moderation'),('WardenAI','moderation'),('ModMate','moderation'),('PurgeBot','moderation'),
+  ('Harmony','music'),('Cadence','music'),('LoFiLounge','music'),('BassDrop','music'),
+  ('Nova AI','ai'),('PixelForge','ai'),('SummarizeMe','ai'),('TranslateHub','ai'),
+  ('CoinCraft','economy'),('MintMarket','economy'),('DailyDrop','economy'),
+  ('GuildForge','gaming'),('StatTracker','gaming'),('MinecraftLink','gaming'),('Scrimmage','gaming'),
+  ('MemeMachine','fun'),('TruthOrDare','fun'),('PetPals','fun'),('DiceRoller','fun'),
+  ('Toolbelt','utility'),('EmbedSmith','utility'),('TimeZoneBuddy','utility'),('ShortLink','utility'),('Echo','utility'),
+  ('AscendXP','leveling'),('LevelUp','leveling'),('PrestigeBot','leveling'),
+  ('TicketFlow','tickets'),('HelpDesk','tickets'),('QuickTicket','tickets'),
+  ('Bastion','security'),('GateKeeper','security'),('PhishGuard','security'),
+  ('GiveawayGo','giveaways'),('LootBox','giveaways'),
+  ('SocialSync','social'),('ProfileCard','social'),
+  ('ApplyBot','applications'),('FormFlow','applications'),
+  ('InsightBoard','analytics'),('PulseStats','analytics'),
+  ('AutoPilot','automation'),('TriggerKit','automation'),
+  ('InviteTrack','invites'),('Referral','invites'),
+  ('CommunityHub','community'),('BirthdayBot','community'),('StarBoard','community'),
+  ('Omnia','multipurpose'),('Everything','multipurpose'),('Swiss','multipurpose'),
+  ('AlertHub','notifications'),('StreamPing','notifications'),
+  ('StudyBuddy','education'),('QuizMaster','education'),('LangLab','education'),
+  ('RoleReactor','roles'),('SelfRole','roles'),('RoleTimer','roles'),
+  ('SupportGenie','support'),('FAQBot','support'),('OnCall','support'),
+  ('Omnia','moderation'),('Omnia','music'),('Omnia','leveling'),('Everything','fun'),('Swiss','utility'),
+  ('WardenAI','ai'),('SupportGenie','ai'),('AutoPilot','utility')
+) AS m(bot_name, cat_slug) ON m.bot_name = b.name
+JOIN public.categories c ON c.slug = m.cat_slug
+ON CONFLICT DO NOTHING;

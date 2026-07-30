@@ -10,33 +10,52 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BotsRouteImport } from './routes/bots'
+import { Route as BotsSlugRouteImport } from './routes/bots.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BotsRoute = BotsRouteImport.update({
+  id: '/bots',
+  path: '/bots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BotsSlugRoute = BotsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BotsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bots': typeof BotsRouteWithChildren
+  '/bots/$slug': typeof BotsSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bots': typeof BotsRouteWithChildren
+  '/bots/$slug': typeof BotsSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bots': typeof BotsRouteWithChildren
+  '/bots/$slug': typeof BotsSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/bots' | '/bots/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/bots' | '/bots/$slug'
+  id: '__root__' | '/' | '/bots' | '/bots/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BotsRoute: typeof BotsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +67,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bots': {
+      id: '/bots'
+      path: '/bots'
+      fullPath: '/bots'
+      preLoaderRoute: typeof BotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bots/$slug': {
+      id: '/bots/$slug'
+      path: '/$slug'
+      fullPath: '/bots/$slug'
+      preLoaderRoute: typeof BotsSlugRouteImport
+      parentRoute: typeof BotsRoute
+    }
   }
 }
 
+interface BotsRouteChildren {
+  BotsSlugRoute: typeof BotsSlugRoute
+}
+
+const BotsRouteChildren: BotsRouteChildren = {
+  BotsSlugRoute: BotsSlugRoute,
+}
+
+const BotsRouteWithChildren = BotsRoute._addFileChildren(BotsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BotsRoute: BotsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
