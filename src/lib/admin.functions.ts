@@ -69,7 +69,14 @@ export const adminBotAction = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("bots").delete().eq("id", data.botId);
       if (error) throw new Error(error.message);
     } else {
-      const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      const patch: {
+        updated_at: string;
+        status?: "pending" | "approved" | "rejected";
+        rejection_reason?: string;
+        featured?: boolean;
+        verified?: boolean;
+        premium?: boolean;
+      } = { updated_at: new Date().toISOString() };
       if (data.action === "approve") patch.status = "approved";
       if (data.action === "reject") {
         patch.status = "rejected";
