@@ -65,32 +65,42 @@ export function SiteHeader() {
         </form>
 
         <div className="hidden items-center gap-2 md:flex">
-          {user ? (
-            <>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/dashboard">
-                  <LayoutDashboard className="h-4 w-4" /> Dashboard
-                </Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link to="/dashboard/submit">
-                  <Plus className="h-4 w-4" /> Add bot
-                </Link>
-              </Button>
-            </>
-      <Button asChild size="sm">
-  <Link to="/dashboard/submit">
-    <Plus className="h-4 w-4" /> Add bot
-  </Link>
-</Button>
+{user ? (
+  <>
+    <Button asChild variant="ghost" size="sm">
+      <Link to="/dashboard">
+        <LayoutDashboard className="h-4 w-4" /> Dashboard
+      </Link>
+    </Button>
 
-<Button
-  variant="ghost"
-  size="sm"
-  onClick={async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/", replace: true });
-  }}
+    <Button asChild size="sm">
+      <Link to="/dashboard/submit">
+        <Plus className="h-4 w-4" /> Add bot
+      </Link>
+    </Button>
+
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={async () => {
+        await supabase.auth.signOut();
+        navigate({ to: "/", replace: true });
+      }}
+    >
+      <LogOut className="h-4 w-4" /> Sign out
+    </Button>
+  </>
+) : (
+  <>
+    <Button asChild variant="ghost" size="sm">
+      <Link to="/auth">Sign in</Link>
+    </Button>
+
+    <Button asChild size="sm">
+      <Link to="/dashboard/submit">Add your bot</Link>
+    </Button>
+  </>
+)}
 >
   <LogOut className="h-4 w-4" /> Sign out
 </Button>
