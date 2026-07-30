@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BotsRouteImport } from './routes/bots'
+import { Route as BotsSlugRouteImport } from './routes/bots.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,39 @@ const BotsRoute = BotsRouteImport.update({
   path: '/bots',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BotsSlugRoute = BotsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BotsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/bots': typeof BotsRoute
+  '/bots': typeof BotsRouteWithChildren
+  '/bots/$slug': typeof BotsSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/bots': typeof BotsRoute
+  '/bots': typeof BotsRouteWithChildren
+  '/bots/$slug': typeof BotsSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/bots': typeof BotsRoute
+  '/bots': typeof BotsRouteWithChildren
+  '/bots/$slug': typeof BotsSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bots'
+  fullPaths: '/' | '/bots' | '/bots/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bots'
-  id: '__root__' | '/' | '/bots'
+  to: '/' | '/bots' | '/bots/$slug'
+  id: '__root__' | '/' | '/bots' | '/bots/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BotsRoute: typeof BotsRoute
+  BotsRoute: typeof BotsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +74,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BotsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bots/$slug': {
+      id: '/bots/$slug'
+      path: '/$slug'
+      fullPath: '/bots/$slug'
+      preLoaderRoute: typeof BotsSlugRouteImport
+      parentRoute: typeof BotsRoute
+    }
   }
 }
 
+interface BotsRouteChildren {
+  BotsSlugRoute: typeof BotsSlugRoute
+}
+
+const BotsRouteChildren: BotsRouteChildren = {
+  BotsSlugRoute: BotsSlugRoute,
+}
+
+const BotsRouteWithChildren = BotsRoute._addFileChildren(BotsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BotsRoute: BotsRoute,
+  BotsRoute: BotsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

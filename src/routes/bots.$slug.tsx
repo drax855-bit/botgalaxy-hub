@@ -12,9 +12,9 @@ const botQuery = (slug: string) =>
   queryOptions({
     queryKey: ["bot", slug],
     queryFn: async () => {
-      const bot = await getBotBySlug({ data: { slug } });
-      if (!bot) throw notFound();
-      return bot;
+      const res = await getBotBySlug({ data: { slug } });
+      if (!res?.bot) throw notFound();
+      return res.bot;
     },
   });
 
@@ -93,7 +93,7 @@ function BotProfile() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        {bot.tags.map((t) => (
+        {bot.tags.map((t: string) => (
           <Badge key={t} variant="secondary">
             {t}
           </Badge>
