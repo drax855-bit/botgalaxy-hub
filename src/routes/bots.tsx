@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { SORT_OPTIONS } from "@/lib/directory";
 import { track, usePageView } from "@/lib/analytics";
 
+type BotSearch = z.infer<typeof searchSchema>;
+
 const searchSchema = z.object({
   q: z.string().optional(),
   category: z.string().optional(),
@@ -21,7 +23,7 @@ const searchSchema = z.object({
   page: z.number().optional(),
 });
 
-export const Route = createFileRoute("/bots")({
+export const Route = createFileRoute("/bots/")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
@@ -48,7 +50,7 @@ function Browse() {
   useEffect(() => {
     const id = setTimeout(() => {
       if ((search.q ?? "") === term) return;
-      navigate({ search: (p) => ({ ...p, q: term || undefined, page: undefined }) });
+      navigate({ search: (p: BotSearch) => ({ ...p, q: term || undefined, page: undefined }) });
       if (term.trim()) track("search", { search_term: term.trim() });
     }, 350);
     return () => clearTimeout(id);
@@ -74,7 +76,7 @@ function Browse() {
   });
 
   const toggle = (key: "verified" | "premium" | "featured") =>
-    navigate({ search: (p) => ({ ...p, [key]: p[key] ? undefined : true, page: undefined }) });
+    navigate({ search: (p: BotSearch) => ({ ...p, [key]: p[key] ? undefined : true, page: undefined }) });
 
   const totalPages = list.data ? Math.max(1, Math.ceil(list.data.total / list.data.pageSize)) : 1;
 
@@ -103,7 +105,7 @@ function Browse() {
             key={s.value}
             size="sm"
             variant={(search.sort ?? "popular") === s.value ? "default" : "secondary"}
-            onClick={() => navigate({ search: (p) => ({ ...p, sort: s.value, page: undefined }) })}
+            onClick={() => navigate({ search: (p: BotSearch) => ({ ...p, sort: s.value, page: undefined }) })}
           >
             {s.label}
           </Button>
@@ -120,7 +122,7 @@ function Browse() {
         <Button
           size="sm"
           variant={!search.category ? "default" : "secondary"}
-          onClick={() => navigate({ search: (p) => ({ ...p, category: undefined, page: undefined }) })}
+          onClick={() => navigate({ search: (p: BotSearch) => ({ ...p, category: undefined, page: undefined }) })}
         >
           All
         </Button>
@@ -130,7 +132,7 @@ function Browse() {
             size="sm"
             variant={search.category === c.slug ? "default" : "secondary"}
             className="shrink-0"
-            onClick={() => navigate({ search: (p) => ({ ...p, category: c.slug, page: undefined }) })}
+            onClick={() => navigate({ search: (p: BotSearch) => ({ ...p, category: c.slug, page: undefined }) })}
           >
             {c.name}
           </Button>
@@ -164,7 +166,7 @@ function Browse() {
           <Button
             variant="secondary"
             disabled={page <= 1}
-            onClick={() => navigate({ search: (p) => ({ ...p, page: page - 1 }) })}
+            onClick={() => navigate({ search: (p: BotSearch) => ({ ...p, page: page - 1 }) })}
           >
             Previous
           </Button>
@@ -174,7 +176,7 @@ function Browse() {
           <Button
             variant="secondary"
             disabled={!list.data.hasMore}
-            onClick={() => navigate({ search: (p) => ({ ...p, page: page + 1 }) })}
+            onClick={() => navigate({ search: (p: BotSearch) => ({ ...p, page: page + 1 }) })}
           >
             Next
           </Button>
