@@ -23,7 +23,7 @@ const searchSchema = z.object({
   page: z.number().optional(),
 });
 
-export const Route = createFileRoute("/bots/")({
+export const Route = createFileRoute("/bots")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
