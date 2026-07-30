@@ -31,7 +31,7 @@ export const getMe = createServerFn({ method: "GET" })
     return {
       userId,
       profile: profile.data as { id: string; username: string; avatar_url: string | null; bio: string | null } | null,
-      roles: ((roles.data ?? []) as { role: string }[]).map((r) => r.role),
+      roles: ((roles.data ?? []) as unknown as { role: string }[]).map((r) => r.role),
     };
   });
 
