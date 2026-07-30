@@ -79,7 +79,7 @@ function BotProfile() {
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button asChild size="lg" onClick={() => track("invite_click", { bot_id: bot.id })}>
-          <a href={bot.invite_url} target="_blank" rel="noreferrer noopener">
+          <a href={bot.invite_url ?? "#"} target="_blank" rel="noreferrer noopener">
             Invite to server <ExternalLink className="h-4 w-4" />
           </a>
         </Button>
