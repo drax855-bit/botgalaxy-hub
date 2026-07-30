@@ -240,11 +240,5 @@ export const trackEvent = createServerFn({ method: "POST" })
       device: data.device ?? null,
       visitor_hash: data.visitor_hash ?? null,
     });
-    if (data.event_type === "bot_profile_view" && data.bot_id) {
-      await supabaseAdmin.rpc("noop_missing" as never).then(
-        () => undefined,
-        () => undefined,
-      );
-    }
     return { ok: true };
   });
