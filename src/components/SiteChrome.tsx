@@ -78,8 +78,13 @@ export function SiteHeader() {
                 </Link>
               </Button>
             </>
-          ) : (
-      <Button
+      <Button asChild size="sm">
+  <Link to="/dashboard/submit">
+    <Plus className="h-4 w-4" /> Add bot
+  </Link>
+</Button>
+
+<Button
   variant="ghost"
   size="sm"
   onClick={async () => {
@@ -89,6 +94,8 @@ export function SiteHeader() {
 >
   <LogOut className="h-4 w-4" /> Sign out
 </Button>
+</>
+) : (
             <>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/auth">Sign in</Link>
