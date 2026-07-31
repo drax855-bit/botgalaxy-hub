@@ -47,6 +47,96 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_permissions: {
+        Row: {
+          approve_bots: boolean
+          ban_users: boolean
+          created_at: string
+          delete_bots: boolean
+          feature_bots: boolean
+          manage_categories: boolean
+          manage_moderators: boolean
+          manage_reports: boolean
+          manage_reviews: boolean
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+          verify_bots: boolean
+          view_audit_logs: boolean
+          view_users: boolean
+        }
+        Insert: {
+          approve_bots?: boolean
+          ban_users?: boolean
+          created_at?: string
+          delete_bots?: boolean
+          feature_bots?: boolean
+          manage_categories?: boolean
+          manage_moderators?: boolean
+          manage_reports?: boolean
+          manage_reviews?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+          verify_bots?: boolean
+          view_audit_logs?: boolean
+          view_users?: boolean
+        }
+        Update: {
+          approve_bots?: boolean
+          ban_users?: boolean
+          created_at?: string
+          delete_bots?: boolean
+          feature_bots?: boolean
+          manage_categories?: boolean
+          manage_moderators?: boolean
+          manage_reports?: boolean
+          manage_reviews?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+          verify_bots?: boolean
+          view_audit_logs?: boolean
+          view_users?: boolean
+        }
+        Relationships: []
+      }
+      admin_requests: {
+        Row: {
+          created_at: string
+          id: string
+          requested_by: string
+          requested_email: string
+          requested_user_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["admin_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          requested_by: string
+          requested_email: string
+          requested_user_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["admin_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          requested_by?: string
+          requested_email?: string
+          requested_user_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["admin_request_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           bot_id: string | null
@@ -339,6 +429,66 @@ export type Database = {
           },
         ]
       }
+      user_bans: {
+        Row: {
+          active: boolean
+          banned_at: string
+          banned_by: string | null
+          created_at: string
+          expires_at: string | null
+          reason: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          banned_at?: string
+          banned_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          reason: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          banned_at?: string
+          banned_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          reason?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_moderation_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -397,6 +547,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_admin_permission: {
+        Args: { permission_name: string; target_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -404,8 +558,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_botgalaxy_owner: { Args: { target_user_id: string }; Returns: boolean }
+      is_user_banned: { Args: { target_user_id: string }; Returns: boolean }
+      review_admin_request: {
+        Args: { p_action: string; p_request_id: string; p_reviewer: string }
+        Returns: Json
+      }
     }
     Enums: {
+      admin_request_status: "pending" | "approved" | "denied" | "cancelled"
       app_role: "admin" | "moderator" | "user"
       bot_status: "pending" | "approved" | "rejected"
       report_status: "open" | "resolved" | "dismissed"
@@ -536,6 +697,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_request_status: ["pending", "approved", "denied", "cancelled"],
       app_role: ["admin", "moderator", "user"],
       bot_status: ["pending", "approved", "rejected"],
       report_status: ["open", "resolved", "dismissed"],
