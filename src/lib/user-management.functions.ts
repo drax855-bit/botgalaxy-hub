@@ -53,9 +53,11 @@ export const getManagedUsers = createServerFn({ method: "GET" })
       );
 
       // Search must cover every registered account, so walk all auth pages.
-      const authUsers: Awaited<
+      type AuthUser = Awaited<
         ReturnType<typeof supabaseAdmin.auth.admin.listUsers>
-      >["data"]["users"] = [];
+      >["data"]["users"][number];
+
+      const authUsers: AuthUser[] = [];
 
       for (let page = 1; page <= MAX_AUTH_PAGES; page += 1) {
         const { data: authResult, error: authError } =
@@ -153,7 +155,7 @@ export const getManagedUsers = createServerFn({ method: "GET" })
             id: authUser.id,
             email: authUser.email ?? "Unknown email",
             username:
-              profile?.username ??
+              profile?.username ||
               String(metadata["username"] ?? metadata["name"] ?? "") ||
               "Unknown user",
             avatar_url:
