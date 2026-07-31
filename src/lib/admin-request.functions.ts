@@ -1,21 +1,37 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveUser } from "@/lib/account-guard";
 
 const OWNER_EMAIL = "draxgaming855@gmail.com";
+const ADMIN_AREA_URL = "https://botgalaxy-hub-52g8.vercel.app/admin";
 
 const requestInput = z.object({
   requestedEmail: z.string().trim().email().max(320),
 });
 
+export type AdminRequestRow = {
+  id: string;
+  requested_email: string;
+  requested_user_id: string | null;
+  requested_by: string;
+  status: "pending" | "approved" | "denied" | "cancelled";
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+};
+
+/**
+ * Best-effort owner alert. Returns false when email delivery is not
+ * configured so the request itself still succeeds.
+ */
 async function sendAdminRequestEmail(
   requestedEmail: string,
   requestId: string,
-) {
-  const apiKey = process.env.RESEND_API_KEY;
+): Promise<boolean> {
+  const apiKey = process.env["RESEND_API_KEY"];
 
   if (!apiKey) {
-    throw new Error("RESEND_API_KEY is missing from Vercel.");
+    return false;
   }
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -38,25 +54,17 @@ ${requestedEmail}
 Request ID:
 ${requestId}
 
-Granting administrator access will allow this account to manage sensitive parts of BotGalaxy, including bot approvals, moderation actions, user roles, categories, reports, and other administrative settings.
-
 IMPORTANT SECURITY WARNING
 
-Administrator access is powerful and can be dangerous if granted to the wrong person. An administrator may be able to approve or remove bots, change user permissions, access moderation tools, and make changes that affect the entire platform.
+Administrator access is powerful. Only approve this request if you
+personally know and trust the requested account, you were expecting the
+request, and you have verified the email address carefully.
 
-Only approve this request if:
-
-- You personally know and trust the requested account.
-- You were expecting this request.
-- You have carefully verified the email address.
-- You understand the permissions being granted.
-
-Do not approve this request if you are unsure, busy, distracted, or unable to verify the person. It is safer to deny the request and review it later.
-
-For security, this email cannot grant administrator access by itself. Sign in to the protected BotGalaxy admin area to approve or deny the request.
+This email cannot grant administrator access by itself. Sign in to the
+protected BotGalaxy admin area to approve or deny the request.
 
 Admin area:
-https://botgalaxy-hub-52g8.vercel.app/admin
+${ADMIN_AREA_URL}
 
 Sincerely,
 BotGalaxy Security Team`,
@@ -65,106 +73,58 @@ BotGalaxy Security Team`,
           <div style="background:#111827;color:white;padding:18px 22px;border-radius:12px 12px 0 0">
             <strong>BOTGALAXY ADMIN ALERT</strong>
           </div>
-
           <div style="border:1px solid #e5e7eb;border-top:0;padding:24px;border-radius:0 0 12px 12px">
             <h2 style="margin-top:0">Administrator access request</h2>
-
-            <p>A new administrator access request has been submitted.</p>
-
             <div style="background:#f4f4f5;padding:14px;border-radius:8px">
-              <strong>Requested account:</strong><br />
-              ${requestedEmail}
+              <strong>Requested account:</strong><br />${requestedEmail}
             </div>
-
-            <p style="font-size:13px;color:#71717a">
-              Request ID: ${requestId}
-            </p>
-
+            <p style="font-size:13px;color:#71717a">Request ID: ${requestId}</p>
             <div style="background:#fef2f2;border:1px solid #fecaca;padding:16px;border-radius:8px;color:#991b1b">
               <strong>Important security warning</strong>
               <p style="margin-bottom:0">
-                Administrator access is powerful and can be dangerous if
-                granted to the wrong person. Verify the email carefully before
-                taking any action.
+                Administrator access is powerful and can be dangerous if granted
+                to the wrong person. Verify the email carefully before acting.
               </p>
             </div>
-
-            <p><strong>Only approve this request if:</strong></p>
-
-            <ul>
-              <li>You personally know and trust the requested account.</li>
-              <li>You were expecting this request.</li>
-              <li>You carefully verified the email address.</li>
-              <li>You understand the permissions being granted.</li>
-            </ul>
-
-            <p>
-              Do not approve while busy, distracted, or unsure. It is safer to
-              deny the request and review it later.
-            </p>
-
-            <p>
-              For security, replying to this email will not grant access.
-              Approval must happen inside the protected BotGalaxy admin area.
-            </p>
-
-            <a
-              href="https://botgalaxy-hub-52g8.vercel.app/admin"
-              style="display:inline-block;background:#111827;color:white;text-decoration:none;padding:11px 18px;border-radius:8px;font-weight:bold"
-            >
-              Open BotGalaxy Admin
-            </a>
-
-            <p style="margin-top:24px">
-              Sincerely,<br />
-              <strong>BotGalaxy Security Team</strong>
-            </p>
+            <p>Approval must happen inside the protected BotGalaxy admin area.</p>
+            <a href="${ADMIN_AREA_URL}" style="display:inline-block;background:#111827;color:white;text-decoration:none;padding:11px 18px;border-radius:8px;font-weight:bold">Open BotGalaxy Admin</a>
+            <p style="margin-top:24px">Sincerely,<br /><strong>BotGalaxy Security Team</strong></p>
           </div>
         </div>
       `,
     }),
   });
 
-  const result = await response.json().catch(() => null);
-
   if (!response.ok) {
-    const message =
-      result?.message ||
-      result?.error ||
-      "Resend could not send the administrator alert.";
+    const result = (await response.json().catch(() => null)) as
+      | { message?: string; error?: string }
+      | null;
 
-    throw new Error(message);
+    throw new Error(
+      result?.message ||
+        result?.error ||
+        "Resend could not send the administrator alert.",
+    );
   }
+
+  return true;
 }
 
 export const createAdminRequest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) => requestInput.parse(raw))
   .handler(async ({ data, context }) => {
+    const guards = await import("@/lib/admin-guards.server");
+    await guards.requireOwner(context.userId);
+
     const email = data.requestedEmail.toLowerCase();
-
-    const { data: isAdmin, error: roleError } =
-      await context.supabase.rpc("has_role", {
-        _user_id: context.userId,
-        _role: "admin",
-      });
-
-    if (roleError) {
-      throw new Error(roleError.message);
-    }
-
-    if (!isAdmin) {
-      throw new Error(
-        "Only administrators can create administrator requests.",
-      );
-    }
 
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
     );
 
     const { data: usersData, error: userError } =
-      await supabaseAdmin.auth.admin.listUsers();
+      await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
 
     if (userError) {
       throw new Error(userError.message);
@@ -181,7 +141,7 @@ export const createAdminRequest = createServerFn({ method: "POST" })
     }
 
     const { data: existingRole, error: existingRoleError } =
-      await context.supabase
+      await supabaseAdmin
         .from("user_roles")
         .select("id")
         .eq("user_id", requestedUser.id)
@@ -196,9 +156,7 @@ export const createAdminRequest = createServerFn({ method: "POST" })
       throw new Error("This account is already an administrator.");
     }
 
-    const database = context.supabase as any;
-
-    const { data: request, error: requestError } = await database
+    const { data: request, error: requestError } = await supabaseAdmin
       .from("admin_requests")
       .insert({
         requested_email: email,
@@ -207,70 +165,45 @@ export const createAdminRequest = createServerFn({ method: "POST" })
         status: "pending",
       })
       .select(
-        "id, requested_email, requested_user_id, requested_by, status, created_at",
+        "id, requested_email, requested_user_id, requested_by, status, created_at, reviewed_by, reviewed_at",
       )
       .single();
 
     if (requestError) {
-      if (requestError.code === "23505") {
+      if (requestError.code === "23505" || requestError.code === "23505") {
         throw new Error(
           "A pending administrator request already exists for this email.",
         );
       }
 
-      throw new Error(requestError.message);
-    }
-
-    try {
-      await sendAdminRequestEmail(email, request.id);
-    } catch (emailError) {
-      await supabaseAdmin
-        .from("admin_requests" as any)
-        .delete()
-        .eq("id", request.id);
-
       throw new Error(
-        emailError instanceof Error
-          ? `Request was not saved because the alert email failed: ${emailError.message}`
-          : "Request was not saved because the alert email failed.",
+        requestError.code === "23505"
+          ? "A pending administrator request already exists for this email."
+          : requestError.message,
       );
     }
 
-    return request;
+    let emailed = false;
+
+    try {
+      emailed = await sendAdminRequestEmail(email, request.id);
+    } catch {
+      emailed = false;
+    }
+
+    return { ...(request as AdminRequestRow), emailed };
   });
 
 export const getAdminRequests = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: isAdmin, error: roleError } =
-      await context.supabase.rpc("has_role", {
-        _user_id: context.userId,
-        _role: "admin",
-      });
+  .middleware([requireActiveUser])
+  .handler(async ({ context }): Promise<AdminRequestRow[]> => {
+    const guards = await import("@/lib/admin-guards.server");
+    await guards.requireOwner(context.userId);
 
-    if (roleError) {
-      throw new Error(roleError.message);
-    }
-
-    if (!isAdmin) {
-      throw new Error("Administrator access is required.");
-    }
-
-    const database = context.supabase as any;
-
-    const { data, error } = await database
+    const { data, error } = await context.supabase
       .from("admin_requests")
       .select(
-        `
-          id,
-          requested_email,
-          requested_user_id,
-          requested_by,
-          status,
-          created_at,
-          reviewed_by,
-          reviewed_at
-        `,
+        "id, requested_email, requested_user_id, requested_by, status, created_at, reviewed_by, reviewed_at",
       )
       .order("created_at", { ascending: false });
 
@@ -278,36 +211,23 @@ export const getAdminRequests = createServerFn({ method: "GET" })
       throw new Error(error.message);
     }
 
-    return data ?? [];
+    return (data ?? []) as AdminRequestRow[];
   });
 
 export const cancelAdminRequest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
-    z
-      .object({
-        requestId: z.string().uuid(),
-      })
-      .parse(raw),
+    z.object({ requestId: z.string().uuid() }).parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin, error: roleError } =
-      await context.supabase.rpc("has_role", {
-        _user_id: context.userId,
-        _role: "admin",
-      });
+    const guards = await import("@/lib/admin-guards.server");
+    await guards.requireOwner(context.userId);
 
-    if (roleError) {
-      throw new Error(roleError.message);
-    }
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
 
-    if (!isAdmin) {
-      throw new Error("Administrator access is required.");
-    }
-
-    const database = context.supabase as any;
-
-    const { data: updatedRequest, error } = await database
+    const { data: updatedRequest, error } = await supabaseAdmin
       .from("admin_requests")
       .update({
         status: "cancelled",
@@ -315,7 +235,6 @@ export const cancelAdminRequest = createServerFn({ method: "POST" })
         reviewed_at: new Date().toISOString(),
       })
       .eq("id", data.requestId)
-      .eq("requested_by", context.userId)
       .eq("status", "pending")
       .select("id")
       .maybeSingle();
@@ -331,4 +250,35 @@ export const cancelAdminRequest = createServerFn({ method: "POST" })
     }
 
     return { ok: true };
+  });
+
+export const reviewAdminRequest = createServerFn({ method: "POST" })
+  .middleware([requireActiveUser])
+  .inputValidator((raw: unknown) =>
+    z
+      .object({
+        requestId: z.string().uuid(),
+        action: z.enum(["approve", "deny"]),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const guards = await import("@/lib/admin-guards.server");
+    await guards.requireOwner(context.userId);
+
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+
+    const { error } = await supabaseAdmin.rpc("review_admin_request", {
+      p_request_id: data.requestId,
+      p_action: data.action,
+      p_reviewer: context.userId,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return { ok: true, action: data.action };
   });
