@@ -1,86 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin, buildOverview } from "./admin.server";
-
-type AdminPermission =
-  | "approve_bots"
-  | "delete_bots"
-  | "verify_bots"
-  | "feature_bots"
-  | "view_users"
-  | "ban_users"
-  | "manage_reports"
-  | "manage_reviews"
-  | "manage_categories"
-  | "manage_moderators"
-  | "view_audit_logs";
-
-async function requireAdminPermission(
-  supabase: any,
-  userId: string,
-  permission: AdminPermission,
-) {
-  const { data: allowed, error } = await supabase.rpc(
-    "has_admin_permission",
-    {
-      target_user_id: userId,
-      permission_name: permission,
-    },
-  );
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (!allowed) {
-    throw new Error(
-      `You do not have the required permission: ${permission}.`,
-    );
-  }
-}
-
-async function requireOwner(
-  supabase: any,
-  userId: string,
-) {
-  const { data: isOwner, error } = await supabase.rpc(
-    "is_botgalaxy_owner",
-    {
-      target_user_id: userId,
-    },
-  );
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (!isOwner) {
-    throw new Error(
-      "Only the BotGalaxy owner can perform this action.",
-    );
-  }
-}
-
-async function hasPermission(
-  supabase: any,
-  userId: string,
-  permission: AdminPermission,
-) {
-  const { data, error } = await supabase.rpc(
-    "has_admin_permission",
-    {
-      target_user_id: userId,
-      permission_name: permission,
-    },
-  );
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return Boolean(data);
-}
+import { requireActiveUser } from "@/lib/account-guard";
+import {
+  assertAdmin,
+  buildOverview,
+  hasPermission,
+  requireAdminPermission,
+  requireOwner,
+} from "./admin.server";
 
 const rangeInput = z.object({
   days: z.number().int().min(1).max(365).optional().default(30),
@@ -89,7 +16,7 @@ const rangeInput = z.object({
 export const getAdminOverview = createServerFn({
   method: "GET",
 })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
     rangeInput.parse(raw ?? {}),
   )
@@ -105,7 +32,7 @@ export const getAdminOverview = createServerFn({
 export const getAdminBots = createServerFn({
   method: "GET",
 })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
     z
       .object({
@@ -187,7 +114,7 @@ export const getAdminBots = createServerFn({
 export const adminBotAction = createServerFn({
   method: "POST",
 })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
     z
       .object({
@@ -360,7 +287,7 @@ export const adminBotAction = createServerFn({
 export const getAdminModeration = createServerFn({
   method: "GET",
 })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .handler(async ({ context }) => {
     await assertAdmin(
       context.supabase,
@@ -576,7 +503,7 @@ export const getAdminModeration = createServerFn({
 export const adminModerationAction = createServerFn({
   method: "POST",
 })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
     z
       .object({
@@ -784,7 +711,7 @@ export const adminModerationAction = createServerFn({
 export const adminCategoryAction = createServerFn({
   method: "POST",
 })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
     z
       .object({

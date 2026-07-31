@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveUser } from "@/lib/account-guard";
 import { currentPeriodKey } from "./directory";
 import { sel } from "./supabase-public.server";
 
@@ -21,7 +21,7 @@ const botInput = z.object({
 });
 
 export const getMe = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const [profile, roles] = await Promise.all([
@@ -36,7 +36,7 @@ export const getMe = createServerFn({ method: "GET" })
   });
 
 export const getMyBots = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("bots")
@@ -68,7 +68,7 @@ export const getMyBots = createServerFn({ method: "GET" })
   });
 
 export const submitBot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) => botInput.parse(raw))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -120,7 +120,7 @@ export const submitBot = createServerFn({ method: "POST" })
   });
 
 export const deleteMyBot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) => z.object({ id: z.string().uuid() }).parse(raw))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -133,7 +133,7 @@ export const deleteMyBot = createServerFn({ method: "POST" })
   });
 
 export const voteForBot = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) => z.object({ botId: z.string().uuid() }).parse(raw))
   .handler(async ({ data, context }) => {
     const period = currentPeriodKey();
@@ -150,7 +150,7 @@ export const voteForBot = createServerFn({ method: "POST" })
   });
 
 export const getVoteState = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) => z.object({ botId: z.string().uuid() }).parse(raw))
   .handler(async ({ data, context }) => {
     const { data: rows } = await context.supabase
@@ -163,7 +163,7 @@ export const getVoteState = createServerFn({ method: "GET" })
   });
 
 export const upsertReview = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
     z
       .object({
@@ -189,7 +189,7 @@ export const upsertReview = createServerFn({ method: "POST" })
   });
 
 export const deleteMyReview = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) => z.object({ botId: z.string().uuid() }).parse(raw))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -202,7 +202,7 @@ export const deleteMyReview = createServerFn({ method: "POST" })
   });
 
 export const submitReport = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
     z
       .object({
