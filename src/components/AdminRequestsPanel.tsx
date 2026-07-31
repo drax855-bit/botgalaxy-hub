@@ -2,15 +2,18 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   AlertTriangle,
   Loader2,
+  Check,
   Mail,
   RefreshCw,
   ShieldPlus,
+  Ban,
   X,
 } from "lucide-react";
 import {
   cancelAdminRequest,
   createAdminRequest,
   getAdminRequests,
+  reviewAdminRequest,
 } from "@/lib/admin-request.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,6 +132,48 @@ export function AdminRequestsPanel() {
         caughtError instanceof Error
           ? caughtError.message
           : "The request could not be cancelled.",
+      );
+    } finally {
+      setWorkingId("");
+    }
+  }
+
+  async function handleReview(
+    request: AdminRequest,
+    action: "approve" | "deny",
+  ) {
+    const confirmed = window.confirm(
+      action === "approve"
+        ? `Grant administrator access to ${request.requested_email}?\n\nAll optional permissions start switched OFF. Only continue if you personally know and trust this account.`
+        : `Deny the administrator request for ${request.requested_email}?`,
+    );
+
+    if (!confirmed) return;
+
+    setWorkingId(request.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      await reviewAdminRequest({
+        data: {
+          requestId: request.id,
+          action,
+        },
+      });
+
+      setSuccess(
+        action === "approve"
+          ? `${request.requested_email} is now an administrator. Enable the permissions they need below.`
+          : `The administrator request for ${request.requested_email} was denied.`,
+      );
+
+      await loadRequests();
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "The request could not be reviewed.",
       );
     } finally {
       setWorkingId("");
@@ -272,21 +317,44 @@ export function AdminRequestsPanel() {
                   </div>
 
                   {isPending && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleCancel(request)}
-                      disabled={working}
-                    >
-                      {working ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <X className="h-4 w-4" />
-                      )}
+                    <div className="flex flex-wrap gap-2 sm:justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleReview(request, "approve")}
+                        disabled={working}
+                      >
+                        {working ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4" />
+                        )}
 
-                      Cancel request
-                    </Button>
+                        Approve
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleReview(request, "deny")}
+                        disabled={working}
+                      >
+                        <Ban className="h-4 w-4" />
+                        Deny
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleCancel(request)}
+                        disabled={working}
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </Button>
+                    </div>
                   )}
                 </article>
               );
