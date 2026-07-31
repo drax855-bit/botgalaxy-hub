@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveUser } from "@/lib/account-guard";
 
 const permissionSchema = z.object({
   approve_bots: z.boolean(),
@@ -37,121 +37,104 @@ const emptyPermissions: AdminPermissions = {
   view_audit_logs: false,
 };
 
-async function requireOwner(
-  supabase: any,
-  userId: string,
-) {
-  const { data: isOwner, error } = await supabase.rpc(
-    "is_botgalaxy_owner",
-    {
-      target_user_id: userId,
-    },
-  );
+const fullPermissions: AdminPermissions = {
+  approve_bots: true,
+  delete_bots: true,
+  verify_bots: true,
+  feature_bots: true,
+  view_users: true,
+  ban_users: true,
+  manage_reports: true,
+  manage_reviews: true,
+  manage_categories: true,
+  manage_moderators: true,
+  view_audit_logs: true,
+};
 
-  if (error) {
-    throw new Error(error.message);
-  }
+export type AdminConsoleRow = {
+  user_id: string;
+  email: string;
+  username: string;
+  avatar_url: string | null;
+  created_at: string | null;
+  is_owner: boolean;
+  permissions: AdminPermissions;
+};
 
-  if (!isOwner) {
-    throw new Error(
-      "Only the BotGalaxy owner can manage administrator permissions.",
-    );
-  }
+function pickPermissions(
+  row: Partial<AdminPermissions> | null | undefined,
+): AdminPermissions {
+  return { ...emptyPermissions, ...(row ?? {}) };
 }
 
 export const getMyAdminPermissions = createServerFn({
   method: "GET",
 })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: isAdmin, error: adminError } =
-      await context.supabase.rpc("has_role", {
-        _user_id: context.userId,
-        _role: "admin",
-      });
+  .middleware([requireActiveUser])
+  .handler(
+    async ({
+      context,
+    }): Promise<{
+      isOwner: boolean;
+      isAdmin: boolean;
+      permissions: AdminPermissions;
+    }> => {
+      const guards = await import("@/lib/admin-guards.server");
 
-    if (adminError) {
-      throw new Error(adminError.message);
-    }
+      const [isAdmin, isOwner] = await Promise.all([
+        guards.hasAdminRole(context.userId),
+        guards.isOwnerAccount(context.userId),
+      ]);
 
-    if (!isAdmin) {
-      throw new Error("Administrator access is required.");
-    }
+      if (!isAdmin && !isOwner) {
+        return {
+          isOwner: false,
+          isAdmin: false,
+          permissions: emptyPermissions,
+        };
+      }
 
-    const { data: isOwner, error: ownerError } =
-      await context.supabase.rpc("is_botgalaxy_owner", {
-        target_user_id: context.userId,
-      });
+      if (isOwner) {
+        return {
+          isOwner: true,
+          isAdmin: true,
+          permissions: fullPermissions,
+        };
+      }
 
-    if (ownerError) {
-      throw new Error(ownerError.message);
-    }
+      const { data, error } = await context.supabase
+        .from("admin_permissions")
+        .select(
+          "approve_bots, delete_bots, verify_bots, feature_bots, view_users, ban_users, manage_reports, manage_reviews, manage_categories, manage_moderators, view_audit_logs",
+        )
+        .eq("user_id", context.userId)
+        .maybeSingle();
 
-    if (isOwner) {
+      if (error) {
+        throw new Error(error.message);
+      }
+
       return {
-        isOwner: true,
-        permissions: {
-          approve_bots: true,
-          delete_bots: true,
-          verify_bots: true,
-          feature_bots: true,
-          view_users: true,
-          ban_users: true,
-          manage_reports: true,
-          manage_reviews: true,
-          manage_categories: true,
-          manage_moderators: true,
-          view_audit_logs: true,
-        } satisfies AdminPermissions,
+        isOwner: false,
+        isAdmin: true,
+        permissions: pickPermissions(data),
       };
-    }
-
-    const database = context.supabase as any;
-
-    const { data, error } = await database
-      .from("admin_permissions")
-      .select(
-        `
-          approve_bots,
-          delete_bots,
-          verify_bots,
-          feature_bots,
-          view_users,
-          ban_users,
-          manage_reports,
-          manage_reviews,
-          manage_categories,
-          manage_moderators,
-          view_audit_logs
-        `,
-      )
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return {
-      isOwner: false,
-      permissions: data ?? emptyPermissions,
-    };
-  });
+    },
+  );
 
 export const getAdminPermissionConsole = createServerFn({
   method: "GET",
 })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await requireOwner(context.supabase, context.userId);
+  .middleware([requireActiveUser])
+  .handler(async ({ context }): Promise<AdminConsoleRow[]> => {
+    const guards = await import("@/lib/admin-guards.server");
+    await guards.requireOwner(context.userId);
 
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
     );
 
-    const database = supabaseAdmin as any;
-
-    const { data: adminRoles, error: roleError } = await database
+    const { data: adminRoles, error: roleError } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
       .eq("role", "admin");
@@ -160,55 +143,30 @@ export const getAdminPermissionConsole = createServerFn({
       throw new Error(roleError.message);
     }
 
-    const adminIds = [
-      ...new Set(
-        (adminRoles ?? []).map(
-          (row: { user_id: string }) => row.user_id,
-        ),
-      ),
+    const adminIds: string[] = [
+      ...new Set((adminRoles ?? []).map((row) => row.user_id as string)),
     ];
 
     if (adminIds.length === 0) {
       return [];
     }
 
-    const [
-      profilesResult,
-      permissionsResult,
-      usersResult,
-    ] = await Promise.all([
-      database
-        .from("profiles")
-        .select("id, username, avatar_url, created_at")
-        .in("id", adminIds),
+    const [profilesResult, permissionsResult, usersResult] =
+      await Promise.all([
+        supabaseAdmin
+          .from("profiles")
+          .select("id, username, avatar_url, created_at")
+          .in("id", adminIds),
 
-      database
-        .from("admin_permissions")
-        .select(
-          `
-            user_id,
-            approve_bots,
-            delete_bots,
-            verify_bots,
-            feature_bots,
-            view_users,
-            ban_users,
-            manage_reports,
-            manage_reviews,
-            manage_categories,
-            manage_moderators,
-            view_audit_logs,
-            updated_at,
-            updated_by
-          `,
-        )
-        .in("user_id", adminIds),
+        supabaseAdmin
+          .from("admin_permissions")
+          .select(
+            "user_id, approve_bots, delete_bots, verify_bots, feature_bots, view_users, ban_users, manage_reports, manage_reviews, manage_categories, manage_moderators, view_audit_logs",
+          )
+          .in("user_id", adminIds),
 
-      supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000,
-      }),
-    ]);
+        supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      ]);
 
     if (profilesResult.error) {
       throw new Error(profilesResult.error.message);
@@ -226,23 +184,15 @@ export const getAdminPermissionConsole = createServerFn({
     const permissionRows = permissionsResult.data ?? [];
     const authUsers = usersResult.data.users ?? [];
 
-    return adminIds.map((userId) => {
-      const profile = profiles.find(
-        (item: { id: string }) => item.id === userId,
-      );
-
-      const authUser = authUsers.find(
-        (item) => item.id === userId,
-      );
-
+    return adminIds.map((userId): AdminConsoleRow => {
+      const profile = profiles.find((item) => item.id === userId);
+      const authUser = authUsers.find((item) => item.id === userId);
       const permissionRow = permissionRows.find(
-        (item: { user_id: string }) =>
-          item.user_id === userId,
+        (item) => item.user_id === userId,
       );
 
       const isOwner =
-        authUser?.email?.toLowerCase() ===
-        "draxgaming855@gmail.com";
+        authUser?.email?.toLowerCase() === guards.OWNER_EMAIL;
 
       return {
         user_id: userId,
@@ -250,28 +200,11 @@ export const getAdminPermissionConsole = createServerFn({
         username: profile?.username ?? "Unknown user",
         avatar_url: profile?.avatar_url ?? null,
         created_at:
-          profile?.created_at ??
-          authUser?.created_at ??
-          null,
+          profile?.created_at ?? authUser?.created_at ?? null,
         is_owner: isOwner,
         permissions: isOwner
-          ? {
-              approve_bots: true,
-              delete_bots: true,
-              verify_bots: true,
-              feature_bots: true,
-              view_users: true,
-              ban_users: true,
-              manage_reports: true,
-              manage_reviews: true,
-              manage_categories: true,
-              manage_moderators: true,
-              view_audit_logs: true,
-            }
-          : {
-              ...emptyPermissions,
-              ...(permissionRow ?? {}),
-            },
+          ? fullPermissions
+          : pickPermissions(permissionRow),
       };
     });
   });
@@ -279,12 +212,11 @@ export const getAdminPermissionConsole = createServerFn({
 export const updateAdminPermissions = createServerFn({
   method: "POST",
 })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((raw: unknown) =>
-    updatePermissionsInput.parse(raw),
-  )
+  .middleware([requireActiveUser])
+  .inputValidator((raw: unknown) => updatePermissionsInput.parse(raw))
   .handler(async ({ data, context }) => {
-    await requireOwner(context.supabase, context.userId);
+    const guards = await import("@/lib/admin-guards.server");
+    await guards.requireOwner(context.userId);
 
     if (data.userId === context.userId) {
       throw new Error(
@@ -292,31 +224,32 @@ export const updateAdminPermissions = createServerFn({
       );
     }
 
+    if (await guards.isOwnerAccount(data.userId)) {
+      throw new Error(
+        "The BotGalaxy owner cannot be restricted.",
+      );
+    }
+
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
     );
 
-    const database = supabaseAdmin as any;
-
-    const { data: targetRole, error: roleError } =
-      await database
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", data.userId)
-        .eq("role", "admin")
-        .maybeSingle();
+    const { data: targetRole, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", data.userId)
+      .eq("role", "admin")
+      .maybeSingle();
 
     if (roleError) {
       throw new Error(roleError.message);
     }
 
     if (!targetRole) {
-      throw new Error(
-        "The selected account is not an administrator.",
-      );
+      throw new Error("The selected account is not an administrator.");
     }
 
-    const { error } = await database
+    const { error } = await supabaseAdmin
       .from("admin_permissions")
       .upsert(
         {
@@ -325,16 +258,14 @@ export const updateAdminPermissions = createServerFn({
           updated_at: new Date().toISOString(),
           updated_by: context.userId,
         },
-        {
-          onConflict: "user_id",
-        },
+        { onConflict: "user_id" },
       );
 
     if (error) {
       throw new Error(error.message);
     }
 
-    await database.from("admin_audit_logs").insert({
+    await supabaseAdmin.from("admin_audit_logs").insert({
       actor_id: context.userId,
       actor_name: "BotGalaxy Owner",
       action: "update_admin_permissions",
@@ -349,20 +280,21 @@ export const updateAdminPermissions = createServerFn({
 export const removeAdministrator = createServerFn({
   method: "POST",
 })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveUser])
   .inputValidator((raw: unknown) =>
-    z
-      .object({
-        userId: z.string().uuid(),
-      })
-      .parse(raw),
+    z.object({ userId: z.string().uuid() }).parse(raw),
   )
   .handler(async ({ data, context }) => {
-    await requireOwner(context.supabase, context.userId);
+    const guards = await import("@/lib/admin-guards.server");
+    await guards.requireOwner(context.userId);
 
     if (data.userId === context.userId) {
+      throw new Error("You cannot remove your own owner access.");
+    }
+
+    if (await guards.isOwnerAccount(data.userId)) {
       throw new Error(
-        "You cannot remove your own owner access.",
+        "The BotGalaxy owner cannot be removed.",
       );
     }
 
@@ -370,9 +302,7 @@ export const removeAdministrator = createServerFn({
       "@/integrations/supabase/client.server"
     );
 
-    const database = supabaseAdmin as any;
-
-    const { error: roleError } = await database
+    const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .delete()
       .eq("user_id", data.userId)
@@ -382,7 +312,7 @@ export const removeAdministrator = createServerFn({
       throw new Error(roleError.message);
     }
 
-    const { error: permissionsError } = await database
+    const { error: permissionsError } = await supabaseAdmin
       .from("admin_permissions")
       .delete()
       .eq("user_id", data.userId);
@@ -391,7 +321,7 @@ export const removeAdministrator = createServerFn({
       throw new Error(permissionsError.message);
     }
 
-    await database.from("admin_audit_logs").insert({
+    await supabaseAdmin.from("admin_audit_logs").insert({
       actor_id: context.userId,
       actor_name: "BotGalaxy Owner",
       action: "remove_administrator",
