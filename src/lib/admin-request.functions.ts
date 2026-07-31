@@ -12,23 +12,34 @@ export const createAdminRequest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const email = data.requestedEmail.toLowerCase();
 
-    const { data: isAdmin, error: roleError } = await context.supabase.rpc(
-      "has_role",
-      {
+    const { data: isAdmin, error: roleError } =
+      await context.supabase.rpc("has_role", {
         _user_id: context.userId,
         _role: "admin",
-      },
+      });
+
+    if (roleError) {
+      throw new Error(roleError.message);
+    }
+
+    if (!isAdmin) {
+      throw new Error(
+        "Only administrators can create administrator requests.",
+      );
+    }
+
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
     );
 
-    if (roleError) throw new Error(roleError.message);
-    if (!isAdmin) throw new Error("Only administrators can create this request.");
+    const { data: usersData, error: userError } =
+      await supabaseAdmin.auth.admin.listUsers();
 
-    const { data: users, error: userError } =
-      await context.supabase.auth.admin.listUsers();
+    if (userError) {
+      throw new Error(userError.message);
+    }
 
-    if (userError) throw new Error(userError.message);
-
-    const requestedUser = users.users.find(
+    const requestedUser = usersData.users.find(
       (user) => user.email?.toLowerCase() === email,
     );
 
@@ -38,18 +49,27 @@ export const createAdminRequest = createServerFn({ method: "POST" })
       );
     }
 
-    const { data: existingRole } = await context.supabase
-      .from("user_roles")
-      .select("id")
-      .eq("user_id", requestedUser.id)
-      .eq("role", "admin")
-      .maybeSingle();
+    const { data: existingRole, error: existingRoleError } =
+      await context.supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", requestedUser.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+    if (existingRoleError) {
+      throw new Error(existingRoleError.message);
+    }
 
     if (existingRole) {
       throw new Error("This account is already an administrator.");
     }
 
-    const { data: request, error } = await context.supabase
+    // admin_requests was added manually, so generated Supabase types
+    // may not include it yet.
+    const database = context.supabase as any;
+
+    const { data: request, error: requestError } = await database
       .from("admin_requests")
       .insert({
         requested_email: email,
@@ -57,17 +77,19 @@ export const createAdminRequest = createServerFn({ method: "POST" })
         requested_by: context.userId,
         status: "pending",
       })
-      .select("id, requested_email, status, created_at")
+      .select(
+        "id, requested_email, requested_user_id, requested_by, status, created_at",
+      )
       .single();
 
-    if (error) {
-      if (error.code === "23505") {
+    if (requestError) {
+      if (requestError.code === "23505") {
         throw new Error(
           "A pending administrator request already exists for this email.",
         );
       }
 
-      throw new Error(error.message);
+      throw new Error(requestError.message);
     }
 
     return request;
@@ -76,14 +98,41 @@ export const createAdminRequest = createServerFn({ method: "POST" })
 export const getAdminRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { data: isAdmin, error: roleError } =
+      await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "admin",
+      });
+
+    if (roleError) {
+      throw new Error(roleError.message);
+    }
+
+    if (!isAdmin) {
+      throw new Error("Administrator access is required.");
+    }
+
+    const database = context.supabase as any;
+
+    const { data, error } = await database
       .from("admin_requests")
       .select(
-        "id, requested_email, requested_user_id, requested_by, status, created_at, reviewed_at",
+        `
+          id,
+          requested_email,
+          requested_user_id,
+          requested_by,
+          status,
+          created_at,
+          reviewed_by,
+          reviewed_at
+        `,
       )
       .order("created_at", { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
 
     return data ?? [];
   });
@@ -91,10 +140,30 @@ export const getAdminRequests = createServerFn({ method: "GET" })
 export const cancelAdminRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) =>
-    z.object({ requestId: z.string().uuid() }).parse(raw),
+    z
+      .object({
+        requestId: z.string().uuid(),
+      })
+      .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { data: isAdmin, error: roleError } =
+      await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "admin",
+      });
+
+    if (roleError) {
+      throw new Error(roleError.message);
+    }
+
+    if (!isAdmin) {
+      throw new Error("Administrator access is required.");
+    }
+
+    const database = context.supabase as any;
+
+    const { data: updatedRequest, error } = await database
       .from("admin_requests")
       .update({
         status: "cancelled",
@@ -103,9 +172,19 @@ export const cancelAdminRequest = createServerFn({ method: "POST" })
       })
       .eq("id", data.requestId)
       .eq("requested_by", context.userId)
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!updatedRequest) {
+      throw new Error(
+        "The request was not found, was already reviewed, or cannot be cancelled.",
+      );
+    }
 
     return { ok: true };
   });
