@@ -15,14 +15,20 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+
+import { AdminPermissionConsole } from "@/components/AdminPermissionConsole";
+import { AdminRequestsPanel } from "@/components/AdminRequestsPanel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useSession } from "@/hooks/useSession";
 import {
   adminBotAction,
   getAdminBots,
 } from "@/lib/admin.functions";
-import { AdminRequestsPanel } from "@/components/AdminRequestsPanel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  getMyAdminPermissions,
+  type AdminPermissions,
+} from "@/lib/admin-permissions.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -48,6 +54,11 @@ type AdminBot = {
   created_at: string;
 };
 
+type PermissionResponse = {
+  isOwner: boolean;
+  permissions: AdminPermissions;
+};
+
 function AdminPage() {
   const navigate = useNavigate();
   const { user, loading } = useSession();
@@ -55,6 +66,13 @@ function AdminPage() {
   const [bots, setBots] = useState<AdminBot[]>([]);
   const [status, setStatus] = useState<BotStatus>("pending");
   const [search, setSearch] = useState("");
+
+  const [permissions, setPermissions] =
+    useState<PermissionResponse | null>(null);
+
+  const [loadingPermissions, setLoadingPermissions] =
+    useState(true);
+
   const [loadingBots, setLoadingBots] = useState(true);
   const [workingId, setWorkingId] = useState("");
   const [error, setError] = useState("");
@@ -70,9 +88,35 @@ function AdminPage() {
 
   useEffect(() => {
     if (user) {
+      loadPermissions();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && permissions) {
       loadBots();
     }
-  }, [user, status]);
+  }, [user, status, permissions]);
+
+  async function loadPermissions() {
+    setLoadingPermissions(true);
+    setError("");
+
+    try {
+      const data =
+        (await getMyAdminPermissions()) as PermissionResponse;
+
+      setPermissions(data);
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "You do not have permission to access this page.",
+      );
+    } finally {
+      setLoadingPermissions(false);
+    }
+  }
 
   async function loadBots() {
     setLoadingBots(true);
@@ -91,11 +135,20 @@ function AdminPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "You do not have permission to access this page.",
+          : "The bot list could not be loaded.",
       );
     } finally {
       setLoadingBots(false);
     }
+  }
+
+  function canUse(
+    permission: keyof AdminPermissions,
+  ) {
+    return Boolean(
+      permissions?.isOwner ||
+        permissions?.permissions[permission],
+    );
   }
 
   async function runAction(
@@ -111,6 +164,33 @@ function AdminPage() {
       | "premium_on"
       | "premium_off",
   ) {
+    const requiredPermission:
+      | keyof AdminPermissions
+      | null =
+      action === "approve" || action === "reject"
+        ? "approve_bots"
+        : action === "delete"
+          ? "delete_bots"
+          : action === "verify" ||
+              action === "unverify"
+            ? "verify_bots"
+            : action === "feature" ||
+                action === "unfeature" ||
+                action === "premium_on" ||
+                action === "premium_off"
+              ? "feature_bots"
+              : null;
+
+    if (
+      requiredPermission &&
+      !canUse(requiredPermission)
+    ) {
+      setError(
+        "You do not have permission to perform this action.",
+      );
+      return;
+    }
+
     let reason = "";
 
     if (action === "reject") {
@@ -155,7 +235,11 @@ function AdminPage() {
     }
   }
 
-  if (loading || (!user && !error)) {
+  if (
+    loading ||
+    loadingPermissions ||
+    (!user && !error)
+  ) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -164,12 +248,13 @@ function AdminPage() {
   }
 
   const accessDenied =
-    error.toLowerCase().includes("admin") ||
+    error.toLowerCase().includes(
+      "administrator access is required",
+    ) ||
     error.toLowerCase().includes("unauthorized") ||
-    error.toLowerCase().includes("forbidden") ||
-    error.toLowerCase().includes("permission");
+    error.toLowerCase().includes("forbidden");
 
-  if (accessDenied) {
+  if (accessDenied || !permissions) {
     return (
       <main className="mx-auto flex min-h-[70vh] max-w-7xl items-center justify-center px-4 py-12">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center">
@@ -180,8 +265,8 @@ function AdminPage() {
           </h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            You do not have permission to access the BotGalaxy admin
-            area.
+            You do not have permission to access the
+            BotGalaxy admin area.
           </p>
 
           <Button asChild className="mt-6">
@@ -200,7 +285,9 @@ function AdminPage() {
             <Shield className="h-5 w-5" />
 
             <span className="text-sm font-medium">
-              BotGalaxy staff
+              {permissions.isOwner
+                ? "BotGalaxy owner"
+                : "BotGalaxy staff"}
             </span>
           </div>
 
@@ -209,8 +296,8 @@ function AdminPage() {
           </h1>
 
           <p className="mt-2 text-muted-foreground">
-            Review submissions, manage bot listings, and control
-            administrator access.
+            Review submissions, manage bot listings, and
+            control staff permissions.
           </p>
         </div>
 
@@ -229,31 +316,24 @@ function AdminPage() {
         </Button>
       </div>
 
-      <AdminRequestsPanel />
+      {permissions.isOwner && (
+        <>
+          <AdminRequestsPanel />
+          <AdminPermissionConsole />
+        </>
+      )}
 
       <section className="mt-8 rounded-2xl border border-border bg-card p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["pending", "Pending"],
-                ["approved", "Approved"],
-                ["rejected", "Rejected"],
-                ["all", "All bots"],
-              ] as const
-            ).map(([value, label]) => (
-              <Button
-                key={value}
-                type="button"
-                size="sm"
-                variant={
-                  status === value ? "default" : "secondary"
-                }
-                onClick={() => setStatus(value)}
-              >
-                {label}
-              </Button>
-            ))}
+          <div>
+            <h2 className="text-2xl font-bold">
+              Bot management
+            </h2>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Available actions depend on your assigned
+              permissions.
+            </p>
           </div>
 
           <form
@@ -277,6 +357,31 @@ function AdminPage() {
           </form>
         </div>
 
+        <div className="mt-5 flex flex-wrap gap-2">
+          {(
+            [
+              ["pending", "Pending"],
+              ["approved", "Approved"],
+              ["rejected", "Rejected"],
+              ["all", "All bots"],
+            ] as const
+          ).map(([value, label]) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant={
+                status === value
+                  ? "default"
+                  : "secondary"
+              }
+              onClick={() => setStatus(value)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+
         {error && (
           <div className="mt-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error}
@@ -294,7 +399,8 @@ function AdminPage() {
             </h2>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              There are no bot listings matching this filter.
+              There are no bot listings matching this
+              filter.
             </p>
           </div>
         ) : (
@@ -317,7 +423,9 @@ function AdminPage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          bot.name.slice(0, 2).toUpperCase()
+                          bot.name
+                            .slice(0, 2)
+                            .toUpperCase()
                         )}
                       </div>
 
@@ -327,7 +435,9 @@ function AdminPage() {
                             {bot.name}
                           </h2>
 
-                          <StatusBadge status={bot.status} />
+                          <StatusBadge
+                            status={bot.status}
+                          />
 
                           {bot.verified && (
                             <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
@@ -367,97 +477,113 @@ function AdminPage() {
 
                           <span>
                             Rating:{" "}
-                            {Number(bot.rating).toFixed(1)}
+                            {Number(
+                              bot.rating,
+                            ).toFixed(1)}
                           </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex shrink-0 flex-wrap gap-2 lg:max-w-md lg:justify-end">
-                      {bot.status !== "approved" && (
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            runAction(bot.id, "approve")
-                          }
-                          disabled={working}
-                        >
-                          <Check className="h-4 w-4" />
-                          Approve
-                        </Button>
-                      )}
+                      {bot.status !== "approved" &&
+                        canUse("approve_bots") && (
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              runAction(
+                                bot.id,
+                                "approve",
+                              )
+                            }
+                            disabled={working}
+                          >
+                            <Check className="h-4 w-4" />
+                            Approve
+                          </Button>
+                        )}
 
-                      {bot.status !== "rejected" && (
+                      {bot.status !== "rejected" &&
+                        canUse("approve_bots") && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              runAction(
+                                bot.id,
+                                "reject",
+                              )
+                            }
+                            disabled={working}
+                          >
+                            <X className="h-4 w-4" />
+                            Reject
+                          </Button>
+                        )}
+
+                      {canUse("verify_bots") && (
                         <Button
                           size="sm"
                           variant="secondary"
                           onClick={() =>
-                            runAction(bot.id, "reject")
+                            runAction(
+                              bot.id,
+                              bot.verified
+                                ? "unverify"
+                                : "verify",
+                            )
                           }
                           disabled={working}
                         >
-                          <X className="h-4 w-4" />
-                          Reject
+                          <BadgeCheck className="h-4 w-4" />
+
+                          {bot.verified
+                            ? "Unverify"
+                            : "Verify"}
                         </Button>
                       )}
 
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          runAction(
-                            bot.id,
-                            bot.verified
-                              ? "unverify"
-                              : "verify",
-                          )
-                        }
-                        disabled={working}
-                      >
-                        <BadgeCheck className="h-4 w-4" />
+                      {canUse("feature_bots") && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              runAction(
+                                bot.id,
+                                bot.featured
+                                  ? "unfeature"
+                                  : "feature",
+                              )
+                            }
+                            disabled={working}
+                          >
+                            <Star className="h-4 w-4" />
 
-                        {bot.verified
-                          ? "Unverify"
-                          : "Verify"}
-                      </Button>
+                            {bot.featured
+                              ? "Unfeature"
+                              : "Feature"}
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          runAction(
-                            bot.id,
-                            bot.featured
-                              ? "unfeature"
-                              : "feature",
-                          )
-                        }
-                        disabled={working}
-                      >
-                        <Star className="h-4 w-4" />
-
-                        {bot.featured
-                          ? "Unfeature"
-                          : "Feature"}
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          runAction(
-                            bot.id,
-                            bot.premium
-                              ? "premium_off"
-                              : "premium_on",
-                          )
-                        }
-                        disabled={working}
-                      >
-                        {bot.premium
-                          ? "Remove premium"
-                          : "Make premium"}
-                      </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              runAction(
+                                bot.id,
+                                bot.premium
+                                  ? "premium_off"
+                                  : "premium_on",
+                              )
+                            }
+                            disabled={working}
+                          >
+                            {bot.premium
+                              ? "Remove premium"
+                              : "Make premium"}
+                          </Button>
+                        </>
+                      )}
 
                       {bot.status === "approved" && (
                         <Button
@@ -477,22 +603,27 @@ function AdminPage() {
                         </Button>
                       )}
 
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() =>
-                          runAction(bot.id, "delete")
-                        }
-                        disabled={working}
-                      >
-                        {working ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
+                      {canUse("delete_bots") && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() =>
+                            runAction(
+                              bot.id,
+                              "delete",
+                            )
+                          }
+                          disabled={working}
+                        >
+                          {working ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
 
-                        Delete
-                      </Button>
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -512,8 +643,10 @@ function StatusBadge({
 }) {
   const styles = {
     pending: "bg-amber-500/10 text-amber-500",
-    approved: "bg-emerald-500/10 text-emerald-500",
-    rejected: "bg-destructive/10 text-destructive",
+    approved:
+      "bg-emerald-500/10 text-emerald-500",
+    rejected:
+      "bg-destructive/10 text-destructive",
   };
 
   return (
