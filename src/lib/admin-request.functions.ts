@@ -170,12 +170,6 @@ export const createAdminRequest = createServerFn({ method: "POST" })
       .single();
 
     if (requestError) {
-      if (requestError.code === "23505" || requestError.code === "23505") {
-        throw new Error(
-          "A pending administrator request already exists for this email.",
-        );
-      }
-
       throw new Error(
         requestError.code === "23505"
           ? "A pending administrator request already exists for this email."
