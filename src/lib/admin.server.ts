@@ -1,4 +1,37 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  hasAdminPermission,
+  requireAdminPermission as requireAdminPermissionForUser,
+  requireOwner as requireOwnerAccount,
+  type AdminPermission,
+} from "./admin-guards.server";
+
+export type { AdminPermission };
+
+/**
+ * The permission RPCs are service-role only, so these wrappers ignore the
+ * request-scoped client and go through the trusted server guards.
+ */
+export async function requireAdminPermission(
+  _supabase: unknown,
+  userId: string,
+  permission: AdminPermission,
+) {
+  await requireAdminPermissionForUser(userId, permission);
+}
+
+export async function requireOwner(_supabase: unknown, userId: string) {
+  await requireOwnerAccount(userId);
+}
+
+export async function hasPermission(
+  _supabase: unknown,
+  userId: string,
+  permission: AdminPermission,
+) {
+  return hasAdminPermission(userId, permission);
+}
+
 
 export async function assertAdmin(supabase: SupabaseClient, userId: string): Promise<string> {
   const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });

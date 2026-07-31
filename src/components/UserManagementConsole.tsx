@@ -58,7 +58,11 @@ type UsersResponse = {
   hasMore: boolean;
 };
 
-export function UserManagementConsole() {
+export function UserManagementConsole({
+  canBan = false,
+}: {
+  canBan?: boolean;
+}) {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [search, setSearch] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
@@ -489,7 +493,8 @@ export function UserManagementConsole() {
                       History
                     </Button>
 
-                    {!user.is_owner &&
+                    {canBan &&
+                      !user.is_owner &&
                       (user.banned ? (
                         <Button
                           type="button"

@@ -4,7 +4,7 @@ import { LayoutDashboard, Plus, Loader2 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/dashboard/")({
   component: DashboardPage,
 });
 
