@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BotsRouteImport } from './routes/bots'
 import { Route as BotsSlugRouteImport } from './routes/bots.$slug'
@@ -19,6 +20,11 @@ import { Route as DashboardSubmitRouteImport } from './routes/dashboard.submit'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -49,6 +55,7 @@ const DashboardSubmitRoute = DashboardSubmitRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
   '/bots/$slug': typeof BotsSlugRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
   '/bots/$slug': typeof BotsSlugRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
   '/bots/$slug': typeof BotsSlugRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/bots'
     | '/bots/$slug'
@@ -83,10 +93,17 @@ export interface FileRouteTypes {
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/auth' | '/bots' | '/bots/$slug' | '/dashboard/submit' | '/dashboard'
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/bots'
+    | '/bots/$slug'
+    | '/dashboard/submit'
+    | '/dashboard'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/auth'
     | '/bots'
     | '/bots/$slug'
@@ -96,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BotsRoute: typeof BotsRouteWithChildren
   DashboardSubmitRoute: typeof DashboardSubmitRoute
@@ -109,6 +127,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -161,6 +186,7 @@ const BotsRouteWithChildren = BotsRoute._addFileChildren(BotsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BotsRoute: BotsRouteWithChildren,
   DashboardSubmitRoute: DashboardSubmitRoute,
