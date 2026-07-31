@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Loader2, Mail, LockKeyhole, UserPlus } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  LockKeyhole,
+  Mail,
+  UserPlus,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { Button } from "@/components/ui/button";
@@ -20,15 +27,34 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("botgalaxy_email");
+
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && user) {
       navigate({ to: "/dashboard", replace: true });
     }
   }, [loading, user, navigate]);
+
+  function changeMode(nextMode: Mode) {
+    setMode(nextMode);
+    setError("");
+    setMessage("");
+    setPassword("");
+    setShowPassword(false);
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -46,6 +72,12 @@ function AuthPage() {
           });
 
         if (signInError) throw signInError;
+
+        if (rememberMe) {
+          localStorage.setItem("botgalaxy_email", email.trim());
+        } else {
+          localStorage.removeItem("botgalaxy_email");
+        }
 
         navigate({ to: "/dashboard", replace: true });
         return;
@@ -178,15 +210,55 @@ function AuthPage() {
                 Password
               </label>
 
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Minimum 6 characters"
-                minLength={6}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Minimum 6 characters"
+                  minLength={6}
+                  required
+                  className="pr-11"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === "signin" && (
+            <div className="flex items-center justify-between gap-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) => setRememberMe(event.target.checked)}
+                  className="h-4 w-4 rounded border-border accent-primary"
+                />
+                Remember me
+              </label>
+
+              <button
+                type="button"
+                onClick={() => changeMode("forgot")}
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot password?
+              </button>
             </div>
           )}
 
@@ -221,34 +293,16 @@ function AuthPage() {
 
         <div className="mt-6 space-y-3 text-center text-sm">
           {mode === "signin" && (
-            <>
+            <p className="text-muted-foreground">
+              Don&apos;t have an account?{" "}
               <button
                 type="button"
-                onClick={() => {
-                  setMode("forgot");
-                  setError("");
-                  setMessage("");
-                }}
-                className="text-primary hover:underline"
+                onClick={() => changeMode("signup")}
+                className="font-medium text-primary hover:underline"
               >
-                Forgot your password?
+                Sign up
               </button>
-
-              <p className="text-muted-foreground">
-                Don&apos;t have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("signup");
-                    setError("");
-                    setMessage("");
-                  }}
-                  className="font-medium text-primary hover:underline"
-                >
-                  Sign up
-                </button>
-              </p>
-            </>
+            </p>
           )}
 
           {mode === "signup" && (
@@ -256,11 +310,7 @@ function AuthPage() {
               Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => {
-                  setMode("signin");
-                  setError("");
-                  setMessage("");
-                }}
+                onClick={() => changeMode("signin")}
                 className="font-medium text-primary hover:underline"
               >
                 Sign in
@@ -271,11 +321,7 @@ function AuthPage() {
           {mode === "forgot" && (
             <button
               type="button"
-              onClick={() => {
-                setMode("signin");
-                setError("");
-                setMessage("");
-              }}
+              onClick={() => changeMode("signin")}
               className="text-primary hover:underline"
             >
               Back to sign in
