@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+} from "@tanstack/react-router";
 import {
   BadgeCheck,
   Check,
@@ -12,7 +16,11 @@ import {
   X,
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
-import { adminBotAction, getAdminBots } from "@/lib/admin.functions";
+import {
+  adminBotAction,
+  getAdminBots,
+} from "@/lib/admin.functions";
+import { AdminRequestsPanel } from "@/components/AdminRequestsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -53,7 +61,10 @@ function AdminPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate({ to: "/auth", replace: true });
+      navigate({
+        to: "/auth",
+        replace: true,
+      });
     }
   }, [loading, user, navigate]);
 
@@ -164,10 +175,13 @@ function AdminPage() {
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center">
           <Shield className="mx-auto h-12 w-12 text-destructive" />
 
-          <h1 className="mt-4 text-2xl font-bold">Access denied</h1>
+          <h1 className="mt-4 text-2xl font-bold">
+            Access denied
+          </h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            You do not have permission to access the BotGalaxy admin area.
+            You do not have permission to access the BotGalaxy admin
+            area.
           </p>
 
           <Button asChild className="mt-6">
@@ -184,7 +198,10 @@ function AdminPage() {
         <div>
           <div className="flex items-center gap-2 text-primary">
             <Shield className="h-5 w-5" />
-            <span className="text-sm font-medium">BotGalaxy staff</span>
+
+            <span className="text-sm font-medium">
+              BotGalaxy staff
+            </span>
           </div>
 
           <h1 className="mt-2 font-display text-3xl font-bold">
@@ -192,7 +209,8 @@ function AdminPage() {
           </h1>
 
           <p className="mt-2 text-muted-foreground">
-            Review submissions and manage public bot listings.
+            Review submissions, manage bot listings, and control
+            administrator access.
           </p>
         </div>
 
@@ -202,11 +220,16 @@ function AdminPage() {
           disabled={loadingBots}
         >
           <RefreshCw
-            className={`h-4 w-4 ${loadingBots ? "animate-spin" : ""}`}
+            className={`h-4 w-4 ${
+              loadingBots ? "animate-spin" : ""
+            }`}
           />
-          Refresh
+
+          Refresh bots
         </Button>
       </div>
+
+      <AdminRequestsPanel />
 
       <section className="mt-8 rounded-2xl border border-border bg-card p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -223,7 +246,9 @@ function AdminPage() {
                 key={value}
                 type="button"
                 size="sm"
-                variant={status === value ? "default" : "secondary"}
+                variant={
+                  status === value ? "default" : "secondary"
+                }
                 onClick={() => setStatus(value)}
               >
                 {label}
@@ -240,7 +265,9 @@ function AdminPage() {
           >
             <Input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
               placeholder="Search bot name..."
             />
 
@@ -262,7 +289,9 @@ function AdminPage() {
           </div>
         ) : bots.length === 0 ? (
           <div className="py-16 text-center">
-            <h2 className="text-lg font-semibold">No bots found</h2>
+            <h2 className="text-lg font-semibold">
+              No bots found
+            </h2>
 
             <p className="mt-2 text-sm text-muted-foreground">
               There are no bot listings matching this filter.
@@ -311,6 +340,12 @@ function AdminPage() {
                               Featured
                             </span>
                           )}
+
+                          {bot.premium && (
+                            <span className="rounded-full bg-violet-500/10 px-2 py-1 text-xs text-violet-500">
+                              Premium
+                            </span>
+                          )}
                         </div>
 
                         <p className="mt-2 text-sm text-muted-foreground">
@@ -318,11 +353,21 @@ function AdminPage() {
                         </p>
 
                         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span>Owner: {bot.owner_name}</span>
-                          <span>Votes: {bot.vote_count}</span>
-                          <span>Servers: {bot.server_count}</span>
                           <span>
-                            Rating: {Number(bot.rating).toFixed(1)}
+                            Owner: {bot.owner_name}
+                          </span>
+
+                          <span>
+                            Votes: {bot.vote_count}
+                          </span>
+
+                          <span>
+                            Servers: {bot.server_count}
+                          </span>
+
+                          <span>
+                            Rating:{" "}
+                            {Number(bot.rating).toFixed(1)}
                           </span>
                         </div>
                       </div>
@@ -332,7 +377,9 @@ function AdminPage() {
                       {bot.status !== "approved" && (
                         <Button
                           size="sm"
-                          onClick={() => runAction(bot.id, "approve")}
+                          onClick={() =>
+                            runAction(bot.id, "approve")
+                          }
                           disabled={working}
                         >
                           <Check className="h-4 w-4" />
@@ -344,7 +391,9 @@ function AdminPage() {
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => runAction(bot.id, "reject")}
+                          onClick={() =>
+                            runAction(bot.id, "reject")
+                          }
                           disabled={working}
                         >
                           <X className="h-4 w-4" />
@@ -358,13 +407,18 @@ function AdminPage() {
                         onClick={() =>
                           runAction(
                             bot.id,
-                            bot.verified ? "unverify" : "verify",
+                            bot.verified
+                              ? "unverify"
+                              : "verify",
                           )
                         }
                         disabled={working}
                       >
                         <BadgeCheck className="h-4 w-4" />
-                        {bot.verified ? "Unverify" : "Verify"}
+
+                        {bot.verified
+                          ? "Unverify"
+                          : "Verify"}
                       </Button>
 
                       <Button
@@ -373,20 +427,49 @@ function AdminPage() {
                         onClick={() =>
                           runAction(
                             bot.id,
-                            bot.featured ? "unfeature" : "feature",
+                            bot.featured
+                              ? "unfeature"
+                              : "feature",
                           )
                         }
                         disabled={working}
                       >
                         <Star className="h-4 w-4" />
-                        {bot.featured ? "Unfeature" : "Feature"}
+
+                        {bot.featured
+                          ? "Unfeature"
+                          : "Feature"}
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() =>
+                          runAction(
+                            bot.id,
+                            bot.premium
+                              ? "premium_off"
+                              : "premium_on",
+                          )
+                        }
+                        disabled={working}
+                      >
+                        {bot.premium
+                          ? "Remove premium"
+                          : "Make premium"}
                       </Button>
 
                       {bot.status === "approved" && (
-                        <Button asChild size="sm" variant="ghost">
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="ghost"
+                        >
                           <Link
                             to="/bots/$slug"
-                            params={{ slug: bot.slug }}
+                            params={{
+                              slug: bot.slug,
+                            }}
                           >
                             <ExternalLink className="h-4 w-4" />
                             View
@@ -397,7 +480,9 @@ function AdminPage() {
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => runAction(bot.id, "delete")}
+                        onClick={() =>
+                          runAction(bot.id, "delete")
+                        }
                         disabled={working}
                       >
                         {working ? (
@@ -405,6 +490,7 @@ function AdminPage() {
                         ) : (
                           <Trash2 className="h-4 w-4" />
                         )}
+
                         Delete
                       </Button>
                     </div>
