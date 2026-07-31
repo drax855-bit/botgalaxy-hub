@@ -12,10 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
-import {
-  adminBotAction,
-  getAdminBots,
-} from "@/lib/admin.functions";
+import { adminBotAction, getAdminBots } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -83,7 +80,7 @@ function AdminPage() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Could not load the admin area.",
+          : "You do not have permission to access this page.",
       );
     } finally {
       setLoadingBots(false);
@@ -147,11 +144,37 @@ function AdminPage() {
     }
   }
 
-  if (loading || !user) {
+  if (loading || (!user && !error)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  const accessDenied =
+    error.toLowerCase().includes("admin") ||
+    error.toLowerCase().includes("unauthorized") ||
+    error.toLowerCase().includes("forbidden") ||
+    error.toLowerCase().includes("permission");
+
+  if (accessDenied) {
+    return (
+      <main className="mx-auto flex min-h-[70vh] max-w-7xl items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center">
+          <Shield className="mx-auto h-12 w-12 text-destructive" />
+
+          <h1 className="mt-4 text-2xl font-bold">Access denied</h1>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            You do not have permission to access the BotGalaxy admin area.
+          </p>
+
+          <Button asChild className="mt-6">
+            <Link to="/">Return home</Link>
+          </Button>
+        </div>
+      </main>
     );
   }
 
@@ -240,6 +263,7 @@ function AdminPage() {
         ) : bots.length === 0 ? (
           <div className="py-16 text-center">
             <h2 className="text-lg font-semibold">No bots found</h2>
+
             <p className="mt-2 text-sm text-muted-foreground">
               There are no bot listings matching this filter.
             </p>
@@ -297,7 +321,9 @@ function AdminPage() {
                           <span>Owner: {bot.owner_name}</span>
                           <span>Votes: {bot.vote_count}</span>
                           <span>Servers: {bot.server_count}</span>
-                          <span>Rating: {Number(bot.rating).toFixed(1)}</span>
+                          <span>
+                            Rating: {Number(bot.rating).toFixed(1)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -358,7 +384,10 @@ function AdminPage() {
 
                       {bot.status === "approved" && (
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/bots/$slug" params={{ slug: bot.slug }}>
+                          <Link
+                            to="/bots/$slug"
+                            params={{ slug: bot.slug }}
+                          >
                             <ExternalLink className="h-4 w-4" />
                             View
                           </Link>
