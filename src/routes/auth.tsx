@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+  CheckCircle2,
   Eye,
   EyeOff,
   Loader2,
@@ -32,6 +33,7 @@ function AuthPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("botgalaxy_email");
@@ -43,10 +45,37 @@ function AuthPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading && user) {
+    const hash = window.location.hash;
+    const search = window.location.search;
+
+    const isConfirmationCallback =
+      hash.includes("access_token") ||
+      hash.includes("type=signup") ||
+      search.includes("code=");
+
+    if (isConfirmationCallback) {
+      setConfirmed(true);
+      setMessage("Email confirmed successfully. You are now signed in.");
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname,
+      );
+
+      const timer = window.setTimeout(() => {
+        navigate({ to: "/dashboard", replace: true });
+      }, 2000);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!loading && user && !confirmed) {
       navigate({ to: "/dashboard", replace: true });
     }
-  }, [loading, user, navigate]);
+  }, [loading, user, confirmed, navigate]);
 
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
@@ -98,7 +127,7 @@ function AuthPage() {
         if (signUpError) throw signUpError;
 
         setMessage(
-          "Account created. Check your email and verify your account before signing in.",
+          "Account created. Check your email and click the confirmation link.",
         );
         return;
       }
@@ -127,6 +156,26 @@ function AuthPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  if (confirmed) {
+    return (
+      <main className="mx-auto flex min-h-[70vh] max-w-7xl items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-xl">
+          <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
+
+          <h1 className="mt-5 font-display text-2xl font-bold">
+            Email confirmed successfully
+          </h1>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            You are now signed in. Redirecting you to your dashboard...
+          </p>
+
+          <Loader2 className="mx-auto mt-6 h-5 w-5 animate-spin text-primary" />
+        </div>
+      </main>
     );
   }
 
