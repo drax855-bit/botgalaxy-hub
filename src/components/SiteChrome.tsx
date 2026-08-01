@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Menu,
   Search,
@@ -7,6 +5,7 @@ import {
   LayoutDashboard,
   Shield,
   Plus,
+  UserRound,
 } from "lucide-react";
 import { BotGalaxyLogo } from "./BotGalaxyLogo";
 import { Button } from "@/components/ui/button";
