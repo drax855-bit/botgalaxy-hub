@@ -1,3 +1,9 @@
+import { useState } from "react";
+import {
+  Link,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import {
   Menu,
   Search,
@@ -7,6 +13,7 @@ import {
   Plus,
   UserRound,
 } from "lucide-react";
+
 import { BotGalaxyLogo } from "./BotGalaxyLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,12 +28,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/bots", label: "Explore" },
-  { to: "/categories", label: "Categories" },
+  {
+    to: "/bots",
+    label: "Explore",
+  },
+  {
+    to: "/categories",
+    label: "Categories",
+  },
   {
     to: "/bots",
     label: "Top voted",
-    search: { sort: "votes" as const },
+    search: {
+      sort: "votes" as const,
+    },
   },
 ];
 
@@ -43,6 +58,7 @@ export function SiteHeader() {
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
+
     setOpen(false);
 
     navigate({
@@ -100,7 +116,7 @@ export function SiteHeader() {
           role="search"
         >
           <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
             <Input
               value={q}
@@ -115,14 +131,32 @@ export function SiteHeader() {
         <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
-              <Button asChild variant="ghost" size="sm">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+              >
+                <Link to="/profile">
+                  <UserRound className="h-4 w-4" />
+                  Profile
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+              >
                 <Link to="/dashboard">
                   <LayoutDashboard className="h-4 w-4" />
                   Dashboard
                 </Link>
               </Button>
 
-              <Button asChild size="sm">
+              <Button
+                asChild
+                size="sm"
+              >
                 <Link to="/dashboard/submit">
                   <Plus className="h-4 w-4" />
                   Add bot
@@ -140,11 +174,20 @@ export function SiteHeader() {
             </>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/auth">Sign in</Link>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+              >
+                <Link to="/auth">
+                  Sign in
+                </Link>
               </Button>
 
-              <Button asChild size="sm">
+              <Button
+                asChild
+                size="sm"
+              >
                 <Link to="/dashboard/submit">
                   Add your bot
                 </Link>
@@ -153,7 +196,10 @@ export function SiteHeader() {
           )}
         </div>
 
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet
+          open={open}
+          onOpenChange={setOpen}
+        >
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -174,10 +220,15 @@ export function SiteHeader() {
             </SheetTitle>
 
             <div className="flex flex-col gap-4 p-4">
-              <form onSubmit={submit} role="search">
+              <form
+                onSubmit={submit}
+                role="search"
+              >
                 <Input
                   value={q}
-                  onChange={(event) => setQ(event.target.value)}
+                  onChange={(event) =>
+                    setQ(event.target.value)
+                  }
                   placeholder="Search bots…"
                   aria-label="Search bots"
                 />
@@ -205,6 +256,14 @@ export function SiteHeader() {
 
                 {user && (
                   <>
+                    <Link
+                      to="/profile"
+                      onClick={() => setOpen(false)}
+                      className="rounded-lg px-3 py-2 hover:bg-secondary"
+                    >
+                      Profile
+                    </Link>
+
                     <Link
                       to="/dashboard"
                       onClick={() => setOpen(false)}
@@ -258,8 +317,8 @@ export function SiteFooter() {
           <BotGalaxyLogo />
 
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-            An independent directory for discovering the best Discord bots in
-            the galaxy.
+            An independent directory for discovering the best
+            Discord bots in the galaxy.
           </p>
         </div>
 
@@ -290,7 +349,9 @@ export function SiteFooter() {
             <li>
               <Link
                 to="/bots"
-                search={{ sort: "newest" }}
+                search={{
+                  sort: "newest",
+                }}
                 className="hover:text-foreground"
               >
                 Recently added
@@ -322,6 +383,15 @@ export function SiteFooter() {
                 Your dashboard
               </Link>
             </li>
+
+            <li>
+              <Link
+                to="/profile"
+                className="hover:text-foreground"
+              >
+                Your profile
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -345,8 +415,8 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-border/70 px-4 py-5 text-center text-xs text-muted-foreground">
-        BotGalaxy is a demo directory. Listings shown are seed/demo data and
-        not affiliated with Discord Inc.
+        BotGalaxy is a demo directory. Listings shown are seed/demo
+        data and not affiliated with Discord Inc.
       </div>
     </footer>
   );
