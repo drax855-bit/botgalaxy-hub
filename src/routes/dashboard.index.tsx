@@ -16,6 +16,7 @@ import {
   Eye,
   LayoutDashboard,
   Loader2,
+  Pencil,
   Plus,
   Trash2,
   XCircle,
@@ -254,6 +255,22 @@ function DashboardPage() {
                     </Link>
                   </Button>
                 )}
+
+                <Button
+                  asChild
+                  size="sm"
+                  variant="secondary"
+                >
+                  <Link
+                    to="/dashboard/bots/$id/edit"
+                    params={{
+                      id: bot.id,
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </Link>
+                </Button>
 
                 <Button
                   type="button"
