@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Browse 60+ Discord bots across moderation, music, AI, economy and 18 more categories. Vote, review and invite in one click.",
+          "Discover Discord bots across moderation, music, AI, economy and more. Vote, review and invite in one click.",
       },
       { property: "og:title", content: "BotGalaxy — Discover the best Discord bots" },
       {
