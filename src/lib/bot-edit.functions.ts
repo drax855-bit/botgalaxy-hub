@@ -137,7 +137,7 @@ export const getOwnedBotForEdit = createServerFn({
     }
 
     return {
-      ...(bot as {
+      ...(bot as unknown as {
         id: string;
         name: string;
         client_id: string;

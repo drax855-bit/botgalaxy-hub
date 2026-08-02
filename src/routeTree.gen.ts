@@ -13,9 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BotsRouteImport } from './routes/bots'
+import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as BotsSlugRouteImport } from './routes/bots.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardSubmitRouteImport } from './routes/dashboard.submit'
+import { Route as DashboardBotsIdEditRouteImport } from './routes/dashboard.bots.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,6 +42,26 @@ const BotsRoute = BotsRouteImport.update({
   path: '/bots',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BotsSlugRoute = BotsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -52,24 +77,39 @@ const DashboardSubmitRoute = DashboardSubmitRouteImport.update({
   path: '/dashboard/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardBotsIdEditRoute = DashboardBotsIdEditRouteImport.update({
+  id: '/dashboard/bots/$id/edit',
+  path: '/dashboard/bots/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
+  '/categories': typeof CategoriesRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
+  '/terms': typeof TermsRoute
   '/bots/$slug': typeof BotsSlugRoute
   '/dashboard/submit': typeof DashboardSubmitRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/bots/$id/edit': typeof DashboardBotsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
+  '/categories': typeof CategoriesRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
+  '/terms': typeof TermsRoute
   '/bots/$slug': typeof BotsSlugRoute
   '/dashboard/submit': typeof DashboardSubmitRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/bots/$id/edit': typeof DashboardBotsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,9 +117,14 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
+  '/categories': typeof CategoriesRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
+  '/terms': typeof TermsRoute
   '/bots/$slug': typeof BotsSlugRoute
   '/dashboard/submit': typeof DashboardSubmitRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/bots/$id/edit': typeof DashboardBotsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,27 +133,42 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/bots'
+    | '/categories'
+    | '/privacy'
+    | '/profile'
+    | '/terms'
     | '/bots/$slug'
     | '/dashboard/submit'
     | '/dashboard/'
+    | '/dashboard/bots/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/auth'
     | '/bots'
+    | '/categories'
+    | '/privacy'
+    | '/profile'
+    | '/terms'
     | '/bots/$slug'
     | '/dashboard/submit'
     | '/dashboard'
+    | '/dashboard/bots/$id/edit'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/auth'
     | '/bots'
+    | '/categories'
+    | '/privacy'
+    | '/profile'
+    | '/terms'
     | '/bots/$slug'
     | '/dashboard/submit'
     | '/dashboard/'
+    | '/dashboard/bots/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,8 +176,13 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BotsRoute: typeof BotsRouteWithChildren
+  CategoriesRoute: typeof CategoriesRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRoute
+  TermsRoute: typeof TermsRoute
   DashboardSubmitRoute: typeof DashboardSubmitRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardBotsIdEditRoute: typeof DashboardBotsIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,6 +215,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BotsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bots/$slug': {
       id: '/bots/$slug'
       path: '/$slug'
@@ -171,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/bots/$id/edit': {
+      id: '/dashboard/bots/$id/edit'
+      path: '/dashboard/bots/$id/edit'
+      fullPath: '/dashboard/bots/$id/edit'
+      preLoaderRoute: typeof DashboardBotsIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -189,8 +289,13 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BotsRoute: BotsRouteWithChildren,
+  CategoriesRoute: CategoriesRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRoute,
+  TermsRoute: TermsRoute,
   DashboardSubmitRoute: DashboardSubmitRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardBotsIdEditRoute: DashboardBotsIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

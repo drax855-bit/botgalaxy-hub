@@ -397,10 +397,28 @@ export function SiteFooter() {
 
         <div>
           <h4 className="text-sm font-semibold">
-            Staff
+            Legal
           </h4>
 
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li>
+              <Link
+                to="/terms"
+                className="hover:text-foreground"
+              >
+                Terms of service
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/privacy"
+                className="hover:text-foreground"
+              >
+                Privacy policy
+              </Link>
+            </li>
+
             <li>
               <Link
                 to="/admin"
@@ -415,8 +433,8 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-border/70 px-4 py-5 text-center text-xs text-muted-foreground">
-        BotGalaxy is a demo directory. Listings shown are seed/demo
-        data and not affiliated with Discord Inc.
+        © 2026 BotGalaxy. An independent Discord bot directory. Not
+        affiliated with Discord Inc.
       </div>
     </footer>
   );
