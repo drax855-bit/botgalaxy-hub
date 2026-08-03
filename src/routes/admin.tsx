@@ -13,58 +13,42 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import {
-  useSession,
-} from "@/hooks/useSession";
+import { useSession } from "@/hooks/useSession";
 import {
   getMyAdminPermissions,
   type AdminPermissions,
 } from "@/lib/admin-permissions.functions";
 
-import {
-  AdminRequestsPanel,
-} from "@/components/AdminRequestsPanel";
-import {
-  AdminPermissionConsole,
-} from "@/components/AdminPermissionConsole";
-import {
-  UserManagementConsole,
-} from "@/components/UserManagementConsole";
-import {
-  BotManagementConsole,
-} from "@/components/BotManagementConsole";
-import {
-  AdminModerationConsole,
-} from "@/components/AdminModerationConsole";
-import {
-  AdminCategoryConsole,
-} from "@/components/AdminCategoryConsole";
-import {
-  Button,
-} from "@/components/ui/button";
+import { AdminRequestsPanel } from "@/components/AdminRequestsPanel";
+import { AdminPermissionConsole } from "@/components/AdminPermissionConsole";
+import { UserManagementConsole } from "@/components/UserManagementConsole";
+import { BotManagementConsole } from "@/components/BotManagementConsole";
+import { AdminModerationConsole } from "@/components/AdminModerationConsole";
+import { AdminCategoryConsole } from "@/components/AdminCategoryConsole";
+import { AdminContactConsole } from "@/components/AdminContactConsole";
+import { AdminClaimConsole } from "@/components/AdminClaimConsole";
+import { Button } from "@/components/ui/button";
 
-export const Route =
-  createFileRoute("/admin")({
-    head: () => ({
-      meta: [
-        {
-          title:
-            "Admin control room — BotGalaxy",
-        },
-        {
-          name: "description",
-          content:
-            "Protected BotGalaxy administration area for bots, reports, reviews, users, moderators and categories.",
-        },
-        {
-          name: "robots",
-          content: "noindex",
-        },
-      ],
-    }),
+export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      {
+        title: "Admin control room — BotGalaxy",
+      },
+      {
+        name: "description",
+        content:
+          "Protected BotGalaxy administration area for bots, reports, reviews, users, moderators, categories, support and ownership claims.",
+      },
+      {
+        name: "robots",
+        content: "noindex",
+      },
+    ],
+  }),
 
-    component: AdminPage,
-  });
+  component: AdminPage,
+});
 
 type AccessState = {
   isOwner: boolean;
@@ -73,8 +57,7 @@ type AccessState = {
 };
 
 function AdminPage() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const {
     user,
@@ -84,11 +67,8 @@ function AdminPage() {
   const [access, setAccess] =
     useState<AccessState | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (sessionLoading) {
@@ -112,24 +92,20 @@ function AdminPage() {
     getMyAdminPermissions()
       .then((result) => {
         if (active) {
-          setAccess(
-            result as AccessState,
-          );
+          setAccess(result as AccessState);
         }
       })
-      .catch(
-        (caughtError: unknown) => {
-          if (!active) {
-            return;
-          }
+      .catch((caughtError: unknown) => {
+        if (!active) {
+          return;
+        }
 
-          setError(
-            caughtError instanceof Error
-              ? caughtError.message
-              : "Could not verify administrator access.",
-          );
-        },
-      )
+        setError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : "Could not verify administrator access.",
+        );
+      })
       .finally(() => {
         if (active) {
           setLoading(false);
@@ -145,10 +121,7 @@ function AdminPage() {
     navigate,
   ]);
 
-  if (
-    sessionLoading ||
-    loading
-  ) {
+  if (sessionLoading || loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-7 w-7 animate-spin text-primary" />
@@ -159,10 +132,7 @@ function AdminPage() {
   if (
     error ||
     !access ||
-    (
-      !access.isAdmin &&
-      !access.isOwner
-    )
+    (!access.isAdmin && !access.isOwner)
   ) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 text-center">
@@ -214,17 +184,15 @@ function AdminPage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-          Manage bot listings, reports,
-          reviews, categories, users,
-          moderators and administrator
+          Manage bot listings, reports, reviews,
+          categories, users, moderators, support
+          requests, ownership claims and administrator
           permissions.
         </p>
 
         <div className="mt-5 flex flex-wrap gap-2">
           {Object.entries(permissions)
-            .filter(
-              ([, granted]) => granted,
-            )
+            .filter(([, granted]) => granted)
             .map(([key]) => (
               <span
                 key={key}
@@ -256,6 +224,10 @@ function AdminPage() {
 
       {isOwner && (
         <>
+          <AdminContactConsole />
+
+          <AdminClaimConsole />
+
           <AdminRequestsPanel />
 
           <AdminPermissionConsole />
