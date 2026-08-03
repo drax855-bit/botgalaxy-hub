@@ -254,6 +254,14 @@ export function SiteHeader() {
                   Categories
                 </Link>
 
+                <Link
+                  to="/contact"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-2 hover:bg-secondary"
+                >
+                  Contact support
+                </Link>
+
                 {user && (
                   <>
                     <Link
@@ -278,6 +286,14 @@ export function SiteHeader() {
                       className="rounded-lg px-3 py-2 hover:bg-secondary"
                     >
                       Add your bot
+                    </Link>
+
+                    <Link
+                      to="/claim"
+                      onClick={() => setOpen(false)}
+                      className="rounded-lg px-3 py-2 hover:bg-secondary"
+                    >
+                      Claim a bot
                     </Link>
                   </>
                 )}
@@ -377,6 +393,15 @@ export function SiteFooter() {
 
             <li>
               <Link
+                to="/claim"
+                className="hover:text-foreground"
+              >
+                Claim a bot listing
+              </Link>
+            </li>
+
+            <li>
+              <Link
                 to="/dashboard"
                 className="hover:text-foreground"
               >
@@ -397,10 +422,19 @@ export function SiteFooter() {
 
         <div>
           <h4 className="text-sm font-semibold">
-            Legal
+            Support & legal
           </h4>
 
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li>
+              <Link
+                to="/contact"
+                className="hover:text-foreground"
+              >
+                Contact support
+              </Link>
+            </li>
+
             <li>
               <Link
                 to="/terms"
