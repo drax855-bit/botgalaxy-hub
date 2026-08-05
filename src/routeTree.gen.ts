@@ -18,6 +18,7 @@ import { Route as ClaimRouteImport } from './routes/claim'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as BotsSlugRouteImport } from './routes/bots.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
@@ -69,6 +70,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/bots/$slug': typeof BotsSlugRoute
   '/dashboard/submit': typeof DashboardSubmitRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/bots/$slug': typeof BotsSlugRoute
   '/dashboard/submit': typeof DashboardSubmitRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/bots/$slug': typeof BotsSlugRoute
   '/dashboard/submit': typeof DashboardSubmitRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/privacy'
     | '/profile'
+    | '/sitemap.xml'
     | '/terms'
     | '/bots/$slug'
     | '/dashboard/submit'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/privacy'
     | '/profile'
+    | '/sitemap.xml'
     | '/terms'
     | '/bots/$slug'
     | '/dashboard/submit'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/privacy'
     | '/profile'
+    | '/sitemap.xml'
     | '/terms'
     | '/bots/$slug'
     | '/dashboard/submit'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   DashboardSubmitRoute: typeof DashboardSubmitRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -334,6 +354,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   DashboardSubmitRoute: DashboardSubmitRoute,
   DashboardIndexRoute: DashboardIndexRoute,
@@ -342,13 +363,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
