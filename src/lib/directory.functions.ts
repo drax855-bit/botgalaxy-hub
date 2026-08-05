@@ -59,6 +59,28 @@ export const listBots = createServerFn({ method: "GET" })
     };
   });
 
+async function fetchPopulatedCategories(supabase: ReturnType<typeof serverPublicClient>): Promise<CategoryRow[]> {
+  const { data, error } = await supabase
+    .from("categories")
+    .select(
+      sel("id, slug, name, description, icon, sort_order, bot_categories!inner(bots!inner(status))"),
+    )
+    .eq("bot_categories.bots.status", "approved")
+    .order("sort_order")
+    .returns<CategoryRow[]>();
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map(({ id, slug, name, description, icon, sort_order }) => ({
+    id,
+    slug,
+    name,
+    description,
+    icon,
+    sort_order,
+  }));
+}
+
 export const getHomeFeed = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = serverPublicClient();
   const base = () => supabase.from("bots").select(sel(BOT_FIELDS)).eq("status", "approved");
@@ -74,7 +96,7 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async () =>
       .returns<BotSummary[]>(),
     base().order("created_at", { ascending: false }).limit(8).returns<BotSummary[]>(),
     base().eq("verified", true).order("server_count", { ascending: false }).limit(8).returns<BotSummary[]>(),
-    supabase.from("categories").select(sel("*")).order("sort_order").returns<CategoryRow[]>(),
+    fetchPopulatedCategories(supabase),
   ]);
 
   const { count } = await supabase
@@ -88,20 +110,14 @@ export const getHomeFeed = createServerFn({ method: "GET" }).handler(async () =>
     topRated: topRated.data ?? [],
     recent: recent.data ?? [],
     verified: verified.data ?? [],
-    categories: categories.data ?? [],
+    categories,
     totalBots: count ?? 0,
   };
 });
 
 export const getCategories = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = serverPublicClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select(sel("*"))
-    .order("sort_order")
-    .returns<CategoryRow[]>();
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return fetchPopulatedCategories(supabase);
 });
 
 export const getBotBySlug = createServerFn({ method: "GET" })
