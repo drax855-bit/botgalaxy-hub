@@ -77,7 +77,7 @@ function Home() {
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:py-24">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-accent" />
-            {compactNumber(data.totalBots)} bots · 22 categories
+            {compactNumber(data.totalBots)} bots · {data.categories.length} categories
           </span>
           <h1 className="mx-auto mt-6 max-w-3xl font-display text-4xl font-bold sm:text-6xl">
             Find the <span className="brand-gradient-text">perfect Discord bot</span> for your server
