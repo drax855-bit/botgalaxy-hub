@@ -20,12 +20,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Discover Discord bots across moderation, music, AI, economy and more. Vote, review and invite in one click.",
+          "Discover Discord bots across moderation, music, AI, economy and more. Explore independent listings, vote, review and invite in one click.",
       },
       { property: "og:title", content: "BotGalaxy — Discover the best Discord bots" },
       {
         property: "og:description",
-        content: "A curated Discord bot directory with instant search, votes, reviews and verified listings.",
+        content: "An independent Discord bot directory with instant search, votes, reviews and ownership claims.",
       },
     ],
   }),
@@ -83,8 +83,7 @@ function Home() {
             Find the <span className="brand-gradient-text">perfect Discord bot</span> for your server
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Moderation, music, AI, economy and everything in between — curated, verified and ranked by the
-            community.
+            Moderation, music, AI, economy and everything in between — independent listings organized with community votes and reviews.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg">

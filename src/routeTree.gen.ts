@@ -14,6 +14,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BotsRouteImport } from './routes/bots'
 import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as ClaimRouteImport } from './routes/claim'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -45,6 +47,16 @@ const BotsRoute = BotsRouteImport.update({
 const CategoriesRoute = CategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClaimRoute = ClaimRouteImport.update({
+  id: '/claim',
+  path: '/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -89,6 +101,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
   '/categories': typeof CategoriesRoute
+  '/claim': typeof ClaimRoute
+  '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -103,6 +117,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
   '/categories': typeof CategoriesRoute
+  '/claim': typeof ClaimRoute
+  '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -118,6 +134,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bots': typeof BotsRouteWithChildren
   '/categories': typeof CategoriesRoute
+  '/claim': typeof ClaimRoute
+  '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -134,6 +152,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bots'
     | '/categories'
+    | '/claim'
+    | '/contact'
     | '/privacy'
     | '/profile'
     | '/terms'
@@ -148,6 +168,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bots'
     | '/categories'
+    | '/claim'
+    | '/contact'
     | '/privacy'
     | '/profile'
     | '/terms'
@@ -162,6 +184,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bots'
     | '/categories'
+    | '/claim'
+    | '/contact'
     | '/privacy'
     | '/profile'
     | '/terms'
@@ -177,6 +201,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BotsRoute: typeof BotsRouteWithChildren
   CategoriesRoute: typeof CategoriesRoute
+  ClaimRoute: typeof ClaimRoute
+  ContactRoute: typeof ContactRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   TermsRoute: typeof TermsRoute
@@ -220,6 +246,20 @@ declare module '@tanstack/react-router' {
       path: '/categories'
       fullPath: '/categories'
       preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/claim': {
+      id: '/claim'
+      path: '/claim'
+      fullPath: '/claim'
+      preLoaderRoute: typeof ClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -290,6 +330,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BotsRoute: BotsRouteWithChildren,
   CategoriesRoute: CategoriesRoute,
+  ClaimRoute: ClaimRoute,
+  ContactRoute: ContactRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   TermsRoute: TermsRoute,
