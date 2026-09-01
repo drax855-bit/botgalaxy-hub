@@ -75,8 +75,9 @@ export const Route = createFileRoute("/bots")({
       {
         property: "og:description",
         content:
-          "Instant search across 22 Discord bot categories.",
+          "Instant search and filtering across the BotGalaxy Discord bot directory.",
       },
+
     ],
   }),
 
