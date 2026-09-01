@@ -274,7 +274,7 @@ function Browse() {
           aria-hidden
         />
 
-        {SORT_OPTIONS.map((option) => (
+        {visibleSortOptions.map((option) => (
           <Button
             key={option.value}
             size="sm"
@@ -300,15 +300,12 @@ function Browse() {
           </Button>
         ))}
 
-        <span className="mx-1 h-5 w-px bg-border" />
+        {visibleFlagFilters.length > 0 && (
+          <span className="mx-1 h-5 w-px bg-border" />
+        )}
 
-        {(
-          [
-            "verified",
-            "premium",
-            "featured",
-          ] as const
-        ).map((key) => (
+        {visibleFlagFilters.map((key) => (
+
           <Button
             key={key}
             size="sm"
