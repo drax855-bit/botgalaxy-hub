@@ -19,7 +19,9 @@ import { z } from "zod";
 import {
   listBots,
   getCategories,
+  getDirectoryAvailability,
 } from "@/lib/directory.functions";
+
 import {
   BotCard,
   BotCardSkeleton,
@@ -73,8 +75,9 @@ export const Route = createFileRoute("/bots")({
       {
         property: "og:description",
         content:
-          "Instant search across 22 Discord bot categories.",
+          "Instant search and filtering across the BotGalaxy Discord bot directory.",
       },
+
     ],
   }),
 
@@ -145,6 +148,43 @@ function Browse() {
     queryFn: () => getCategories(),
     staleTime: 300_000,
   });
+
+  const availability = useQuery({
+    queryKey: ["directory-availability"],
+    queryFn: () => getDirectoryAvailability(),
+    staleTime: 300_000,
+  });
+
+  const counts = availability.data;
+
+  const visibleSortOptions =
+    SORT_OPTIONS.filter((option) => {
+      if (option.value === "top_rated") {
+        return (counts?.ratingCountAvailable ?? 0) > 0;
+      }
+
+      if (option.value === "servers") {
+        return (counts?.serverCountAvailable ?? 0) > 0;
+      }
+
+      if (option.value === "votes") {
+        return (counts?.voteCountAvailable ?? 0) > 0;
+      }
+
+      return true;
+    });
+
+  const visibleFlagFilters = (
+    [
+      ["verified", counts?.verifiedCount ?? 0],
+      ["premium", counts?.premiumCount ?? 0],
+      ["featured", counts?.featuredCount ?? 0],
+    ] as const
+  )
+    .filter(([, count]) => count > 0)
+    .map(([key]) => key);
+
+
 
   const page = search.page ?? 1;
 
@@ -234,7 +274,7 @@ function Browse() {
           aria-hidden
         />
 
-        {SORT_OPTIONS.map((option) => (
+        {visibleSortOptions.map((option) => (
           <Button
             key={option.value}
             size="sm"
@@ -260,15 +300,12 @@ function Browse() {
           </Button>
         ))}
 
-        <span className="mx-1 h-5 w-px bg-border" />
+        {visibleFlagFilters.length > 0 && (
+          <span className="mx-1 h-5 w-px bg-border" />
+        )}
 
-        {(
-          [
-            "verified",
-            "premium",
-            "featured",
-          ] as const
-        ).map((key) => (
+        {visibleFlagFilters.map((key) => (
+
           <Button
             key={key}
             size="sm"
