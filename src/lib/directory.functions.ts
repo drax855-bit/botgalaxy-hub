@@ -284,9 +284,9 @@ export const getDirectoryAvailability = createServerFn({ method: "GET" }).handle
   if (firstError) throw new Error(firstError.message);
 
   return {
-    verifiedCount: verified.count ?? 0,
-    premiumCount: premium.count ?? 0,
-    featuredCount: featured.count ?? 0,
+    verified: (verified.count ?? 0) > 0,
+    premium: (premium.count ?? 0) > 0,
+    featured: (featured.count ?? 0) > 0,
     serverCountAvailable: servers.count ?? 0,
     ratingCountAvailable: ratings.count ?? 0,
     voteCountAvailable: votes.count ?? 0,
