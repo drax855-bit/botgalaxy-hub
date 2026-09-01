@@ -149,6 +149,43 @@ function Browse() {
     staleTime: 300_000,
   });
 
+  const availability = useQuery({
+    queryKey: ["directory-availability"],
+    queryFn: () => getDirectoryAvailability(),
+    staleTime: 300_000,
+  });
+
+  const counts = availability.data;
+
+  const visibleSortOptions =
+    SORT_OPTIONS.filter((option) => {
+      if (option.value === "top_rated") {
+        return (counts?.ratingCountAvailable ?? 0) > 0;
+      }
+
+      if (option.value === "servers") {
+        return (counts?.serverCountAvailable ?? 0) > 0;
+      }
+
+      if (option.value === "votes") {
+        return (counts?.voteCountAvailable ?? 0) > 0;
+      }
+
+      return true;
+    });
+
+  const visibleFlagFilters = (
+    [
+      ["verified", counts?.verifiedCount ?? 0],
+      ["premium", counts?.premiumCount ?? 0],
+      ["featured", counts?.featuredCount ?? 0],
+    ] as const
+  )
+    .filter(([, count]) => count > 0)
+    .map(([key]) => key);
+
+
+
   const page = search.page ?? 1;
 
   const params = {
