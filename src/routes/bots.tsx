@@ -19,7 +19,9 @@ import { z } from "zod";
 import {
   listBots,
   getCategories,
+  getDirectoryAvailability,
 } from "@/lib/directory.functions";
+
 import {
   BotCard,
   BotCardSkeleton,
