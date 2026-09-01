@@ -176,12 +176,12 @@ function Browse() {
 
   const visibleFlagFilters = (
     [
-      ["verified", counts?.verifiedCount ?? 0],
-      ["premium", counts?.premiumCount ?? 0],
-      ["featured", counts?.featuredCount ?? 0],
+      ["verified", counts?.verified],
+      ["premium", counts?.premium],
+      ["featured", counts?.featured],
     ] as const
   )
-    .filter(([, count]) => count > 0)
+    .filter(([, available]) => Boolean(available))
     .map(([key]) => key);
 
 
