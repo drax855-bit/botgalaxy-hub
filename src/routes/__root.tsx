@@ -82,8 +82,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "BotGalaxy is a curated directory of Discord bots across 22 categories. Browse, vote, review and invite.",
+          "BotGalaxy is a curated directory of Discord bots. Browse, vote, review and invite.",
       },
+      { name: "google-site-verification", content: "3HR5fpwvIP41rVO6wL3sWHjkFG9FD55XiI7qxjGxzLU" },
       { property: "og:site_name", content: "BotGalaxy" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
