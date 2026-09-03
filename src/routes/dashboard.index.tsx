@@ -29,6 +29,7 @@ import {
 } from "@/lib/account.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { OfficialOwnerBadge } from "@/components/OfficialOwnerBadge";
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardPage,
@@ -55,6 +56,10 @@ function DashboardPage() {
     staleTime: 0,
     refetchOnMount: "always",
   });
+
+  const isOfficialOwner = Boolean(
+    bots.data?.some((bot) => bot.status === "approved"),
+  );
 
   const removeBot = useMutation({
     mutationFn: (id: string) =>
@@ -106,9 +111,13 @@ function DashboardPage() {
             </span>
           </div>
 
-          <h1 className="mt-2 font-display text-3xl font-bold">
-            Your bots
-          </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">
+              Your bots
+            </h1>
+
+            {isOfficialOwner && <OfficialOwnerBadge />}
+          </div>
 
           <p className="mt-2 text-muted-foreground">
             Manage your Discord bot submissions.
