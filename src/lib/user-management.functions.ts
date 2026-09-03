@@ -18,6 +18,8 @@ export type ManagedUser = {
   email_confirmed: boolean;
   roles: string[];
   is_owner: boolean;
+  /** Derived: owns at least one approved bot. Read-only. */
+  official_owner: boolean;
   banned: boolean;
   ban: {
     reason: string;
@@ -110,7 +112,7 @@ export const getManagedUsers = createServerFn({ method: "GET" })
 
       const userIds = pageUsers.map((user) => user.id);
 
-      const [profilesResult, rolesResult, bansResult] = await Promise.all([
+      const [profilesResult, rolesResult, bansResult, ownedBotsResult] = await Promise.all([
         supabaseAdmin
           .from("profiles")
           .select("id, username, avatar_url, created_at")
@@ -127,15 +129,27 @@ export const getManagedUsers = createServerFn({ method: "GET" })
             "user_id, reason, banned_at, banned_by, expires_at, active",
           )
           .in("user_id", userIds),
+
+        supabaseAdmin
+          .from("bots")
+          .select("owner_id")
+          .eq("status", "approved")
+          .in("owner_id", userIds),
       ]);
 
       if (profilesResult.error) throw new Error(profilesResult.error.message);
       if (rolesResult.error) throw new Error(rolesResult.error.message);
       if (bansResult.error) throw new Error(bansResult.error.message);
+      if (ownedBotsResult.error) throw new Error(ownedBotsResult.error.message);
 
       const profiles = profilesResult.data ?? [];
       const roles = rolesResult.data ?? [];
       const bans = bansResult.data ?? [];
+      const officialOwnerIds = new Set(
+        (ownedBotsResult.data ?? [])
+          .map((row) => (row as { owner_id: string | null }).owner_id)
+          .filter((id): id is string => Boolean(id)),
+      );
 
       const users: ManagedUser[] = pageUsers
         .map((authUser) => {
@@ -166,6 +180,7 @@ export const getManagedUsers = createServerFn({ method: "GET" })
             last_sign_in_at: authUser.last_sign_in_at ?? null,
             email_confirmed: Boolean(authUser.email_confirmed_at),
             roles: userRoles,
+            official_owner: officialOwnerIds.has(authUser.id),
             is_owner:
               authUser.email?.toLowerCase() === guards.OWNER_EMAIL,
             banned: Boolean(ban?.active) && !banExpired,
