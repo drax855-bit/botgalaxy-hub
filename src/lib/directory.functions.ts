@@ -128,7 +128,7 @@ export const getBotBySlug = createServerFn({ method: "GET" })
       .from("bots")
       .select(
         sel(
-          "id, slug, client_id, name, avatar_url, short_description, long_description, tags, invite_url, website_url, support_url, owner_name, prefix, server_count, vote_count, rating, rating_count, verified, featured, premium, is_demo, created_at, bot_categories(categories(slug,name))",
+          "id, slug, client_id, name, avatar_url, short_description, long_description, tags, invite_url, website_url, support_url, owner_name, owner_id, prefix, server_count, vote_count, rating, rating_count, verified, featured, premium, is_demo, created_at, bot_categories(categories(slug,name))",
         ),
       )
       .eq("slug", data.slug)
@@ -147,6 +147,7 @@ export const getBotBySlug = createServerFn({ method: "GET" })
         website_url: string | null;
         support_url: string | null;
         owner_name: string;
+        owner_id: string | null;
         prefix: string | null;
         server_count: number;
         vote_count: number;
