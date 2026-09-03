@@ -218,7 +218,8 @@ export const getBotBySlug = createServerFn({ method: "GET" })
     ]);
 
     return {
-      bot: { ...bot, categories: cats },
+      // This bot is approved, so a linked owner is by definition an official bot owner.
+      bot: { ...bot, categories: cats, owner_is_official: Boolean(bot.owner_id) },
       reviews: reviewsRes.data ?? [],
       similar: similarRes.data ?? [],
     };
