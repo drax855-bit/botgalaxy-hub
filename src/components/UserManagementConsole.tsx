@@ -382,6 +382,8 @@ export function UserManagementConsole({
                           {user.username}
                         </h3>
 
+                        {user.official_owner && <OfficialOwnerBadge />}
+
                         {user.is_owner && (
                           <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-500">
                             Owner
