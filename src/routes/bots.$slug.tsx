@@ -44,6 +44,7 @@ import {
   BotCard,
   StarRating,
 } from "@/components/BotCard";
+import { OfficialOwnerBadge } from "@/components/OfficialOwnerBadge";
 import {
   Button,
 } from "@/components/ui/button";
