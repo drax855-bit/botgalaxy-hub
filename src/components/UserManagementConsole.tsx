@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { OfficialOwnerBadge } from "@/components/OfficialOwnerBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +33,7 @@ type ManagedUser = {
   email_confirmed: boolean;
   roles: string[];
   is_owner: boolean;
+  official_owner?: boolean;
   banned: boolean;
   ban: {
     reason: string;
@@ -380,6 +382,8 @@ export function UserManagementConsole({
                         <h3 className="text-lg font-semibold">
                           {user.username}
                         </h3>
+
+                        {user.official_owner && <OfficialOwnerBadge />}
 
                         {user.is_owner && (
                           <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-500">

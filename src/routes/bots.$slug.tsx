@@ -44,6 +44,7 @@ import {
   BotCard,
   StarRating,
 } from "@/components/BotCard";
+import { OfficialOwnerBadge } from "@/components/OfficialOwnerBadge";
 import {
   Button,
 } from "@/components/ui/button";
@@ -1131,10 +1132,14 @@ function BotProfile() {
               Owner
             </span>
 
-            <p className="mt-1 font-medium">
+            <p className="mt-1 flex flex-wrap items-center gap-2 font-medium">
               {
                 bot.owner_name
               }
+
+              {bot.owner_is_official && (
+                <OfficialOwnerBadge />
+              )}
             </p>
           </div>
 

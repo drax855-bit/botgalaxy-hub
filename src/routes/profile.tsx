@@ -5,6 +5,7 @@ import { Camera, ImagePlus, Loader2, LockKeyhole, Save, UserRound } from "lucide
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/hooks/useSession";
+import { OfficialOwnerBadge } from "@/components/OfficialOwnerBadge";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/profile")({
@@ -41,6 +42,7 @@ function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [officialOwner, setOfficialOwner] = useState(false);
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -70,6 +72,16 @@ function ProfilePage() {
       }
 
       setLoading(false);
+    })();
+
+    void (async () => {
+      const { count } = await (supabase as any)
+        .from("bots")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", user.id)
+        .eq("status", "approved");
+
+      if (active) setOfficialOwner((count ?? 0) > 0);
     })();
 
     return () => {
@@ -201,7 +213,10 @@ function ProfilePage() {
         <span className="text-sm font-medium">Your account</span>
       </div>
 
-      <h1 className="mt-2 text-3xl font-bold">Profile settings</h1>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <h1 className="text-3xl font-bold">Profile settings</h1>
+        {officialOwner && <OfficialOwnerBadge />}
+      </div>
       <p className="mt-2 text-sm text-muted-foreground">
         Change your public display name and profile picture.
       </p>
