@@ -32,6 +32,7 @@ type ManagedUser = {
   email_confirmed: boolean;
   roles: string[];
   is_owner: boolean;
+  official_owner?: boolean;
   banned: boolean;
   ban: {
     reason: string;
