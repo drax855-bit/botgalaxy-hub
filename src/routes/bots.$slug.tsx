@@ -894,8 +894,8 @@ function BotProfile() {
           )}
         </Button>
 
-        {bot.website_url && (
-          !isTicketTool ? (
+        {bot.website_url &&
+          !isTicketTool && (
           <Button
             asChild
             size="lg"
