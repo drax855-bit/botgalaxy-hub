@@ -776,29 +776,20 @@ function BotProfile() {
         </div>
       </header>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        {bot.invite_url ? (
+      {isTicketTool ? (
+        bot.website_url ? (
           <Button
             asChild
             size="lg"
           >
             <a
               href={
-                bot.invite_url
+                bot.website_url
               }
               target="_blank"
               rel="noreferrer noopener"
-              onClick={() =>
-                track(
-                  "invite_click",
-                  {
-                    bot_id:
-                      bot.id,
-                  },
-                )
-              }
             >
-              Invite to server
+              Invite from Website
 
               <ExternalLink className="h-4 w-4" />
             </a>
@@ -810,7 +801,41 @@ function BotProfile() {
           >
             Invite unavailable
           </Button>
-        )}
+        )
+      ) : bot.invite_url ? (
+        <Button
+          asChild
+          size="lg"
+        >
+          <a
+            href={
+              bot.invite_url
+            }
+            target="_blank"
+            rel="noreferrer noopener"
+            onClick={() =>
+              track(
+                "invite_click",
+                {
+                  bot_id:
+                    bot.id,
+                },
+              )
+            }
+          >
+            Invite to server
+
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </Button>
+      ) : (
+        <Button
+          size="lg"
+          disabled
+        >
+          Invite unavailable
+        </Button>
+      )}
 
         <Button
           type="button"
