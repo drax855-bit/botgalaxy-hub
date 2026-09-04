@@ -240,6 +240,10 @@ function BotProfile() {
         )
       : undefined;
 
+  const isTicketTool =
+    bot.slug ===
+    "ticket-tool";
+
   const [
     reviewRating,
     setReviewRating,
@@ -776,6 +780,7 @@ function BotProfile() {
         </div>
       </header>
 
+      <div className="mt-6 flex flex-wrap gap-3">
       {isTicketTool ? (
         bot.website_url ? (
           <Button
