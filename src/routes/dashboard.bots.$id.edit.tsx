@@ -39,6 +39,11 @@ function EditBotPage() {
   const navigate = useNavigate();
   const { user, loading } = useSession();
 
+  // Only the stable user ID is used in effect dependencies: session
+  // refreshes can replace the full user object and would otherwise rerun
+  // the loaders and overwrite unsaved form state.
+  const userId = user?.id;
+
   const [categories, setCategories] = useState<
     Category[]
   >([]);
@@ -83,10 +88,10 @@ function EditBotPage() {
         replace: true,
       });
     }
-  }, [loading, user, navigate]);
+  }, [loading, userId, navigate]);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       return;
     }
 
@@ -131,7 +136,7 @@ function EditBotPage() {
     }
 
     void loadBot();
-  }, [id, user]);
+  }, [id, userId]);
 
   useEffect(() => {
     async function loadCategories() {
