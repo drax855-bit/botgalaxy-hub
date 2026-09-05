@@ -50,7 +50,7 @@ function ProfilePage() {
 
   useEffect(() => {
     if (sessionLoading) return;
-    if (!user) {
+    if (!userId) {
       void navigate({ to: "/auth", replace: true });
       return;
     }
@@ -62,7 +62,7 @@ function ProfilePage() {
       const { data, error: loadError } = await (supabase as any)
         .from("profiles")
         .select("id, username, display_name, avatar_url")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
 
       if (!active) return;
@@ -82,7 +82,7 @@ function ProfilePage() {
       const { count } = await (supabase as any)
         .from("bots")
         .select("id", { count: "exact", head: true })
-        .eq("owner_id", user.id)
+        .eq("owner_id", userId)
         .eq("status", "approved");
 
       if (active) setOfficialOwner((count ?? 0) > 0);
@@ -91,7 +91,7 @@ function ProfilePage() {
     return () => {
       active = false;
     };
-  }, [user, sessionLoading, navigate]);
+  }, [userId, sessionLoading, navigate]);
 
   useEffect(() => {
     return () => {
