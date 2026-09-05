@@ -85,9 +85,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "BotGalaxy is a curated directory of Discord bots. Browse, vote, review and invite.",
       },
       { name: "google-site-verification", content: "3HR5fpwvIP41rVO6wL3sWHjkFG9FD55XiI7qxjGxzLU" },
+      { name: "application-name", content: "BotGalaxy" },
       { property: "og:site_name", content: "BotGalaxy" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "BotGalaxy",
+          alternateName: ["BotGalaxy Directory", "BotGalaxy Discord Bot Directory"],
+          url: "https://botgalaxy-hub-52g8.vercel.app/",
+        }),
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
