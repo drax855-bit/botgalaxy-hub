@@ -135,8 +135,48 @@ export const Route =
       const bot =
         loaderData.bot;
 
+      const SEO_OVERRIDES: Record<
+        string,
+        { title: string; description: string }
+      > = {
+        "carl-bot": {
+          title:
+            "Carl-bot Discord Bot — Moderation, Reaction Roles & More | BotGalaxy",
+          description:
+            "Explore Carl-bot for Discord: reaction roles, moderation, automod, logging, embeds and custom commands. View the independent BotGalaxy listing.",
+        },
+        dyno: {
+          title:
+            "Dyno Discord Bot — Moderation, Automod & Dashboard | BotGalaxy",
+          description:
+            "Explore Dyno for Discord: moderation, automod, logs, roles, welcome messages and dashboard controls. View the independent BotGalaxy listing.",
+        },
+        yagpdb: {
+          title:
+            "YAGPDB Discord Bot — Automod, Roles & Custom Commands | BotGalaxy",
+          description:
+            "Explore YAGPDB for Discord: automod, moderation, role menus, self-assignable roles, custom commands and feeds. View the independent BotGalaxy listing.",
+        },
+        "dank-memer": {
+          title:
+            "Dank Memer Discord Bot — Economy, Pets & Trading | BotGalaxy",
+          description:
+            "Explore Dank Memer for Discord: economy gameplay, currency, items, pets, collecting, progression and trading. View the independent BotGalaxy listing.",
+        },
+      };
+
+      const override =
+        SEO_OVERRIDES[
+          bot.slug
+        ];
+
       const title =
+        override?.title ??
         `${bot.name} — Discord bot on BotGalaxy`;
+
+      const description =
+        override?.description ??
+        bot.short_description;
 
       return {
         meta: [
@@ -147,7 +187,7 @@ export const Route =
             name:
               "description",
             content:
-              bot.short_description,
+              description,
           },
           {
             property:
@@ -158,7 +198,7 @@ export const Route =
             property:
               "og:description",
             content:
-              bot.short_description,
+              description,
           },
         ],
       };
