@@ -136,7 +136,7 @@ function EditBotPage() {
     }
 
     void loadBot();
-  }, [id, user]);
+  }, [id, userId]);
 
   useEffect(() => {
     async function loadCategories() {

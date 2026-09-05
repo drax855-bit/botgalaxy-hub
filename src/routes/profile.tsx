@@ -32,6 +32,10 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 function ProfilePage() {
   const navigate = useNavigate();
   const { user, loading: sessionLoading } = useSession();
+  // Only the stable user ID is used in effect dependencies: session
+  // refreshes can replace the full user object and would otherwise rerun
+  // the loaders and overwrite unsaved form state.
+  const userId = user?.id;
   const fileInput = useRef<HTMLInputElement | null>(null);
 
   const [profile, setProfile] = useState<ProfileRow | null>(null);
